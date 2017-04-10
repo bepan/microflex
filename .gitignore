@@ -1,1 +1,4 @@
 vendor/
+public/
+src/Controllers/
+src/Repositories

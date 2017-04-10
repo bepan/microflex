@@ -1,44 +1,45 @@
 <?php
+
 namespace Betopan\Http;
 
 class Router
 {
-    private $routes = [];
+    protected $routes = [];
     
     public function get($path, $callback)
     {
-        $this->registerRoute( 'get', $path, $callback );
+        $this->registerRoute('get', $path, $callback);
     }
 
     public function post($path, $callback)
     {
-        $this->registerRoute( 'post', $path, $callback );
+        $this->registerRoute('post', $path, $callback);
     }
 
     public function delete($path, $callback)
     {
-        $this->registerRoute( 'delete', $path, $callback );
+        $this->registerRoute('delete', $path, $callback);
     }
 
     public function put($path, $callback)
     {
-        $this->registerRoute( 'put', $path, $callback );
+        $this->registerRoute('put', $path, $callback);
     }
 
     public function patch($path, $callback)
     {
-        $this->registerRoute( 'patch', $path, $callback );
+        $this->registerRoute('patch', $path, $callback);
     }
 
     public function activate()
     {
-        foreach ($this->routes as $route)
-        {
-            if ( preg_match($route['pattern'], $_SERVER['REQUEST_URI']) === 1 )
-            {
+        foreach ($this->routes as $route) {
+
+            if (preg_match($route['pattern'], $_SERVER['REQUEST_URI']) === 1) {
+
                 // check if its the correct request method.
-            	if ( strtolower($_SERVER['REQUEST_METHOD']) !== $route['method'] )
-                {
+            	if (strtolower($_SERVER['REQUEST_METHOD']) !== $route['method']) {
+
                     http_response_code(405);
 
                     echo "{$method} method not allowed";
@@ -59,57 +60,57 @@ class Router
 
     private function executeRoute($callback, $urlParams)
     {
-        if ( is_array($callback) )
-        {
+        if (is_array($callback)) {
+
             $refFunc = new \ReflectionMethod($callback[0], $callback[1]);
         }
-        else
-        {
+        else {
+
             $refFunc = new \ReflectionFunction($callback);   
         }
 
         $mainParams = $this->getCallbackParams($refFunc, $urlParams);
 
-        if ( is_array($callback) )
-        {
+        if (is_array($callback)) {
+
             $classDependencies = [];
 
-            if ( method_exists($callback[0], '__construct') )
-            {
+            if (method_exists($callback[0], '__construct')) {
+
                 $classRefFunc = new \ReflectionMethod($callback[0], '__construct');
 
                 $classDependencies = $this->getCallbackParams($classRefFunc, $urlParams);
             }
 
-            $object = new $callback[0]( ...$classDependencies );
+            $object = new $callback[0](...$classDependencies);
 
-            $object->{$callback[1]}( ...$mainParams );
+            $object->{$callback[1]}(...$mainParams);
 
             return;
         }
 
-        $callback( ...$mainParams );
+        $callback(...$mainParams);
     }
 
     private function getCallbackParams($reflectionFunc, array $urlParams)
     {
-        if ( count($reflectionFunc->getParameters()) === 0 )
-        {
+        if (count($reflectionFunc->getParameters()) === 0) {
+
             return [];
         }
         
-        foreach ( $reflectionFunc->getParameters() as $param )
-        {
+        foreach ($reflectionFunc->getParameters() as $param) {
+
             preg_match('/\[.*\]/', $param, $output);
 
             $splitParam = explode(' ', $output[0]);
 
-            if ( count($splitParam) === 4 )
-            {
+            if (count($splitParam) === 4) {
+
                 $argument = strtolower($splitParam[2]);
 
-                if ( !array_key_exists($argument, $urlParams) ) 
-                {
+                if (!array_key_exists($argument, $urlParams)) {
+
                     throw new \Exception("Unknown callback argument: {$argument}");
                 }
 
@@ -117,12 +118,12 @@ class Router
 
                 $finalParam = preg_replace('/\?.*/','', $explodeUri[$urlParams[$argument]]);
             } 
-            else 
-            {
+            else {
+
                 $subfinalParams = [];
 
-                if ( method_exists($splitParam[2], '__construct') )
-                {
+                if (method_exists($splitParam[2], '__construct')) {
+
                     $subrefFunc = new \ReflectionMethod($splitParam[2], '__construct');
 
                     $subfinalParams = $this->getCallbackParams($subrefFunc, $urlParams);
@@ -139,8 +140,8 @@ class Router
 
     private function registerRoute($methodType, $path, $callback)
     {
-        if ( !is_callable($callback) && !is_string($callback) ) 
-        {
+        if (!is_callable($callback) && !is_string($callback)) {
+
             throw new \Exception('Invalid callback type passed to the router.');
         }
         
@@ -171,10 +172,10 @@ class Router
 
     private function parseIfCallbackString($callback)
     {
-        if ( is_string($callback) ) 
-        {
-            if ( preg_match('/^[a-zA-Z\\\\]+@[a-zA-Z0-9]+$/', $callback) === 0 )
-            {
+        if (is_string($callback)) {
+
+            if (preg_match('/^[a-zA-Z\\\\]+@[a-zA-Z0-9]+$/', $callback) === 0) {
+
                 throw new \Exception('Invalid string callback format.');
             }
             

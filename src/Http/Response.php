@@ -1,15 +1,9 @@
 <?php
+
 namespace Betopan\Http;
 
 class Response
 {
-    public function __construct()
-    {
-
-    }
-
-    public function hi() {}
-
     public function send($content, $code = 200)
     {
     	$this->setCode($code);
@@ -33,8 +27,8 @@ class Response
 
     public function setContentType($type)
     {
-    	switch ($type) 
-        {
+    	switch ($type) {
+            
     		case 'plain':
     		case 'html':
     		    header("Content-Type: text/{$type}");
