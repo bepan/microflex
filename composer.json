@@ -1,0 +1,16 @@
+{
+    "name": "root/php-mysql",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Alberto Chapa",
+            "email": "a.chapa.rodriguez@accenture.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+    	"psr-4": {
+    	    "Betopan\\": "src/"
+    	}
+    }
+}
