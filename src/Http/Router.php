@@ -4,6 +4,8 @@ namespace Betopan\Http;
 
 class Router
 {
+    private static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
+
     protected $routes = [];
     
     public function get($path, $callback)
@@ -37,8 +39,7 @@ class Router
 
             if (preg_match($route['pattern'], $_SERVER['REQUEST_URI']) === 1) {
 
-                // check if its the correct request method.
-            	if (strtolower($_SERVER['REQUEST_METHOD']) !== $route['method']) {
+            	if (strtolower($_SERVER['REQUEST_METHOD']) !== $route['method']) { // check correct request method.
 
                     http_response_code(405);
 
@@ -60,16 +61,11 @@ class Router
 
     private function executeRoute($callback, $urlParams)
     {
-        if (is_array($callback)) {
+        $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);
 
-            $refFunc = new \ReflectionMethod($callback[0], $callback[1]);
-        }
-        else {
+        $mainParams = $this->getCallbackParams($refFunc);
 
-            $refFunc = new \ReflectionFunction($callback);   
-        }
-
-        $mainParams = $this->getCallbackParams($refFunc, $urlParams);
+        $this->populateReqObjectWithUrlParams($mainParams, $urlParams);
 
         if (is_array($callback)) {
 
@@ -79,7 +75,7 @@ class Router
 
                 $classRefFunc = new \ReflectionMethod($callback[0], '__construct');
 
-                $classDependencies = $this->getCallbackParams($classRefFunc, $urlParams);
+                $classDependencies = $this->getCallbackParams($classRefFunc);
             }
 
             $object = new $callback[0](...$classDependencies);
@@ -92,7 +88,30 @@ class Router
         $callback(...$mainParams);
     }
 
-    private function getCallbackParams($reflectionFunc, array $urlParams)
+    private function populateReqObjectWithUrlParams(&$mainParams, $urlParams)
+    {
+        $reqObject = null;
+
+        foreach ($mainParams as $param) {
+
+            if ($param instanceof Request) {
+
+                $reqObject = $param;
+            }
+        }
+
+        if (count($urlParams) && $reqObject !== null) { // fill dynamic params array of req object.
+
+            $explodeUri = explode('/', $_SERVER['REQUEST_URI']);
+            
+            foreach ($urlParams as $key => $value) {
+
+                $reqObject->params[$key] = preg_replace('/\?.*/', '', $explodeUri[$value]);
+            }
+        }
+    }
+
+    private function getCallbackParams($reflectionFunc)
     {
         if (count($reflectionFunc->getParameters()) === 0) {
 
@@ -105,32 +124,16 @@ class Router
 
             $splitParam = explode(' ', $output[0]);
 
-            if (count($splitParam) === 4) {
+            $subfinalParams = [];
 
-                $argument = strtolower($splitParam[2]);
+            if (method_exists($splitParam[2], '__construct')) {
 
-                if (!array_key_exists($argument, $urlParams)) {
+                $subrefFunc = new \ReflectionMethod($splitParam[2], '__construct');
 
-                    throw new \Exception("Unknown callback argument: {$argument}");
-                }
-
-                $explodeUri = explode('/', $_SERVER['REQUEST_URI']);
-
-                $finalParam = preg_replace('/\?.*/','', $explodeUri[$urlParams[$argument]]);
-            } 
-            else {
-
-                $subfinalParams = [];
-
-                if (method_exists($splitParam[2], '__construct')) {
-
-                    $subrefFunc = new \ReflectionMethod($splitParam[2], '__construct');
-
-                    $subfinalParams = $this->getCallbackParams($subrefFunc, $urlParams);
-                }
-
-                $finalParam = new $splitParam[2]( ...$subfinalParams );
+                $subfinalParams = $this->getCallbackParams($subrefFunc);
             }
+
+            $finalParam = new $splitParam[2]( ...$subfinalParams );
 
             $finalParams[] = $finalParam;
         }
@@ -145,29 +148,30 @@ class Router
             throw new \Exception('Invalid callback type passed to the router.');
         }
         
-        $callback = $this->parseIfCallbackString($callback);
+        $callback = $this->parseIfCallbackString($callback); // parse if callback is a class method.
         
-        // Url params stuff.
-        $urlParamPattern = '/:[a-zA-Z]+/';
+        $urlParams = $this->getUrlParamNames($path);
         
-        $urlParams = $this->getUrlParamNames($path, $urlParamPattern);
-
-        $path = preg_replace($urlParamPattern, '[a-z0-9]+', $path); // replace param chunks
+        $fullUrlRegex = $this->buildUrlRegex($path);
         
-        // build url regex.
-    	$escapedPath = "{$this->escapeForRegex($path)}(\/)?";
-
-        $queryStringPattern = '(\?([a-z]+)?=?([^&]+)?(&([a-z]+)?=?([^&]+)?)*)?';
-        
-        $regexPattern = "/^{$escapedPath}{$queryStringPattern}$/";
-        
-        // saving the route in route array.
-        $this->routes[] = [
+        $this->routes[] = [ // saving the route in route array.
             'method'   => $methodType,
-            'pattern'  => $regexPattern,
+            'pattern'  => $fullUrlRegex,
             'callback' => $callback,
             'urlParams' => $urlParams
         ];
+    }
+
+    private function buildUrlRegex($path)
+    {
+        $pathReplaced = preg_replace(self::$URL_PARAM_PATTERN, '[a-z0-9]+', $path); // replace param chunks
+        
+        // build url regex.
+        $escapedPath = "{$this->escapeForRegex($pathReplaced)}(\/)?";
+
+        $queryStringPattern = '(\?([a-z]+)?=?([^&]+)?(&([a-z]+)?=?([^&]+)?)*)?';
+        
+        return "/^{$escapedPath}{$queryStringPattern}$/";
     }
 
     private function parseIfCallbackString($callback)
@@ -185,19 +189,19 @@ class Router
         return $callback;
     }
 
-    private function getUrlParamNames($path, $pattern)
+    private function getUrlParamNames($path)
     {
         $urlParams = [];
 
         $explodePath = explode('/', $path);
 
-        preg_match_all($pattern, $path, $outputParams);
+        preg_match_all(self::$URL_PARAM_PATTERN, $path, $outputParams);
 
         foreach ($outputParams[0] as $param) {
 
             $key = array_search($param, $explodePath);
 
-            $value = strtolower(str_replace(':', '$', $param));
+            $value = strtolower(str_replace(':', '', $param));
 
             $urlParams[$value] = $key;
         }
