@@ -43,22 +43,16 @@ class Router extends RouterBase
 
                     return;
             	}
-
-                foreach ($route['middlewares'] as $callback) {
-
-                    $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);            
-
-                    $mainParams = $this->getCallbackParams($refFunc);     
-
-                    $this->populateReqObjectWithUrlParams($mainParams, $route['urlParams']);    
-
-                    $cbResult = $this->executeRoute($callback, $mainParams);
-
-                    if ($cbResult === null) break; // break the callback stack if middlwares dont return th next cb.
-                }
-
+                
+                $this->executeMiddlewares($route['middlewares'], $route['urlParams']);
                 return;
             }
+        }
+
+        if ($this->lastTypeRegistered === 'middleware') { // Execute trailing middlewares
+
+            $this->executeMiddlewares($this->middlewares, $route['urlParams']);
+            return;
         }
         
         http_response_code(404);
@@ -66,8 +60,26 @@ class Router extends RouterBase
         echo 'Resource not found.';
     }
 
+    private function executeMiddlewares($middlewares, $urlParams)
+    {
+        foreach ($middlewares as $callback) {
+
+            $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);            
+
+            $mainParams = $this->getCallbackParams($refFunc);     
+
+            $this->populateReqObjectWithUrlParams($mainParams, $urlParams);    
+
+            $cbResult = $this->executeMiddleware($callback, $mainParams);
+
+            if ($cbResult === null) return; // break the callback stack if middlwares dont return th next cb.
+        }
+    }
+
     public function use(Callable $callable)
     {
         $this->middlewares[] = $callable;
+
+        $this->lastTypeRegistered = 'middleware';
     }
 }

@@ -9,8 +9,9 @@ abstract class RouterBase
     protected $routes = [];
     protected $middlewares = [];
     protected $middlewaresUsed = [];
+    protected $lastTypeRegistered;
 
-    protected function executeRoute($callback, $mainParams)
+    protected function executeMiddleware($callback, $mainParams)
     {
         if (is_array($callback)) {
 
@@ -112,7 +113,9 @@ abstract class RouterBase
         $fullUrlRegex = $this->buildUrlRegex($path);
 
         // attach middlewares to callback
-        $middlewares = $this->middlewares;
+        $this->middlewaresUsed = array_merge($this->middlewaresUsed, $this->middlewares);
+        $this->middlewares = [];
+        $middlewares = $this->middlewaresUsed;
         $middlewares[] = $callback;
         
         $this->routes[] = [ // saving the route in route array.
@@ -121,6 +124,8 @@ abstract class RouterBase
             'middlewares' => $middlewares,
             'urlParams'   => $urlParams
         ];
+
+        $this->lastTypeRegistered = 'method';
     }
 
     protected function buildUrlRegex($path)
