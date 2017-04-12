@@ -3,7 +3,7 @@
 namespace Betopan\Http;
 
 class Router extends RouterBase
-{    
+{
     public function get($path, $callback)
     {
         $this->registerRoute('get', $path, $callback);
@@ -44,15 +44,18 @@ class Router extends RouterBase
                     return;
             	}
 
-                $callback = $route['callback'];
+                foreach ($route['middlewares'] as $callback) {
 
-                $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);        
+                    $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);            
 
-                $mainParams = $this->getCallbackParams($refFunc);        
+                    $mainParams = $this->getCallbackParams($refFunc);     
 
-                $this->populateReqObjectWithUrlParams($mainParams, $route['urlParams']);
+                    $this->populateReqObjectWithUrlParams($mainParams, $route['urlParams']);    
 
-                $this->executeRoute($callback, $mainParams);
+                    $cbResult = $this->executeRoute($callback, $mainParams);
+
+                    if ($cbResult === null) break; // break the callback stack if middlwares dont return th next cb.
+                }
 
                 return;
             }
@@ -61,5 +64,10 @@ class Router extends RouterBase
         http_response_code(404);
 
         echo 'Resource not found.';
+    }
+
+    public function use(Callable $callable)
+    {
+        $this->middlewares[] = $callable;
     }
 }

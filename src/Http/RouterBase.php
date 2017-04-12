@@ -4,9 +4,11 @@ namespace Betopan\Http;
 
 abstract class RouterBase
 {
-    protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
+	protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
 
     protected $routes = [];
+    protected $middlewares = [];
+    protected $middlewaresUsed = [];
 
     protected function executeRoute($callback, $mainParams)
     {
@@ -28,7 +30,7 @@ abstract class RouterBase
             return;
         }
 
-        $callback(...$mainParams);
+        return $callback(...$mainParams);
     }
 
     protected function populateReqObjectWithUrlParams(&$mainParams, $urlParams)
@@ -72,16 +74,23 @@ abstract class RouterBase
                 throw new \Exception('Arguments provided must be type hinted.');
             }
 
-            $subfinalParams = [];
-
-            if (method_exists($splitParam[2], '__construct')) {
-
-                $subrefFunc = new \ReflectionMethod($splitParam[2], '__construct');
-
-                $subfinalParams = $this->getCallbackParams($subrefFunc);
+            if ($splitParam[2] === 'callable') {
+                
+                $finalParam = function() { return true; };
             }
+            else {
 
-            $finalParam = new $splitParam[2]( ...$subfinalParams );
+                $subfinalParams = [];    
+
+                if (method_exists($splitParam[2], '__construct')) {    
+
+                    $subrefFunc = new \ReflectionMethod($splitParam[2], '__construct');    
+
+                    $subfinalParams = $this->getCallbackParams($subrefFunc);
+                }
+
+                $finalParam = new $splitParam[2](...$subfinalParams);
+            }
 
             $finalParams[] = $finalParam;
         }
@@ -101,12 +110,16 @@ abstract class RouterBase
         $urlParams = $this->getUrlParamNames($path);
         
         $fullUrlRegex = $this->buildUrlRegex($path);
+
+        // attach middlewares to callback
+        $middlewares = $this->middlewares;
+        $middlewares[] = $callback;
         
         $this->routes[] = [ // saving the route in route array.
-            'method'   => $methodType,
-            'pattern'  => $fullUrlRegex,
-            'callback' => $callback,
-            'urlParams' => $urlParams
+            'method'      => $methodType,
+            'pattern'     => $fullUrlRegex,
+            'middlewares' => $middlewares,
+            'urlParams'   => $urlParams
         ];
     }
 
