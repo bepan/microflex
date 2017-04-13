@@ -7,9 +7,35 @@ abstract class RouterBase
 	protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
 
     protected $routes = [];
+
     protected $middlewares = [];
+
     protected $middlewaresUsed = [];
-    protected $lastTypeRegistered;
+
+    protected $lastCallbackTypeRegistered = 'method'; // to check if the last callback was middleware or http method.
+    
+    protected $cachedObjects = []; // to deal with singleton pattern
+    
+    protected $nextMiddleware = false;
+
+
+    protected function executeMiddlewares($middlewares, $urlParams)
+    {
+        foreach ($middlewares as $callback) {
+
+            $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);            
+
+            $mainParams = $this->getCallbackParams($refFunc);  
+
+            $this->populateReqObjectWithUrlParams($mainParams, $urlParams);    
+
+            $this->executeMiddleware($callback, $mainParams);
+
+            if (!$this->nextMiddleware) return; // break the callback stack if middlwares dont return th next cb.
+            
+            $this->nextMiddleware = false;
+        }
+    }
 
     protected function executeMiddleware($callback, $mainParams)
     {
@@ -31,7 +57,7 @@ abstract class RouterBase
             return;
         }
 
-        return $callback(...$mainParams);
+        $callback(...$mainParams);
     }
 
     protected function populateReqObjectWithUrlParams(&$mainParams, $urlParams)
@@ -75,22 +101,35 @@ abstract class RouterBase
                 throw new \Exception('Arguments provided must be type hinted.');
             }
 
-            if ($splitParam[2] === 'callable') {
+            $classType = $splitParam[2];
+            
+            if (array_key_exists($classType, $this->cachedObjects)) {
                 
-                $finalParam = function() { return true; };
+                $finalParam = $this->cachedObjects[$classType];
             }
             else {
 
-                $subfinalParams = [];    
-
-                if (method_exists($splitParam[2], '__construct')) {    
-
-                    $subrefFunc = new \ReflectionMethod($splitParam[2], '__construct');    
-
-                    $subfinalParams = $this->getCallbackParams($subrefFunc);
+                if ($classType === 'callable' || $classType === 'Closure') {
+                    
+                    $finalParam = function() { $this->nextMiddleware = true; };
                 }
+                else {    
 
-                $finalParam = new $splitParam[2](...$subfinalParams);
+                    $subfinalParams = [];        
+
+                    if (method_exists($classType, '__construct')) {        
+
+                        $subrefFunc = new \ReflectionMethod($classType, '__construct');        
+
+                        $subfinalParams = $this->getCallbackParams($subrefFunc);
+                    }
+
+                    $finalObject = new $classType(...$subfinalParams);
+
+                    $finalParam = $finalObject;
+
+                    $this->cachedObjects[$classType] = $finalObject;
+                }
             }
 
             $finalParams[] = $finalParam;
@@ -125,7 +164,7 @@ abstract class RouterBase
             'urlParams'   => $urlParams
         ];
 
-        $this->lastTypeRegistered = 'method';
+        $this->lastCallbackTypeRegistered = 'method';
     }
 
     protected function buildUrlRegex($path)
@@ -178,5 +217,31 @@ abstract class RouterBase
     protected function escapeForRegex($source)
     {
         return preg_replace('/\//', '\/', $source);
+    }
+
+    protected function uriExists($uri)
+    {
+        foreach ($this->routes as $route) {
+            
+            if (preg_match($route['pattern'], $uri) === 1) {
+                
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function searchForUriAndMethod($uri, $method)
+    {
+        foreach ($this->routes as $route) {
+            
+            if (preg_match($route['pattern'], $uri) === 1 && $route['method'] === $method) {
+                
+                return $route;
+            }
+        }
+
+        return null;
     }
 }

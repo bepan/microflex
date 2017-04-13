@@ -4,82 +4,58 @@ namespace Betopan\Http;
 
 class Router extends RouterBase
 {
-    public function get($path, $callback)
-    {
-        $this->registerRoute('get', $path, $callback);
-    }
+    protected $methods = ['get', 'post', 'delete', 'put', 'patch'];
 
-    public function post($path, $callback)
+    public function __call($methodName, $args)
     {
-        $this->registerRoute('post', $path, $callback);
-    }
+       if (!in_array($methodName, $this->methods)) {
+           
+           throw new \Exception("{$methodName} router method, is not supported.");
+       }
 
-    public function delete($path, $callback)
-    {
-        $this->registerRoute('delete', $path, $callback);
-    }
-
-    public function put($path, $callback)
-    {
-        $this->registerRoute('put', $path, $callback);
-    }
-
-    public function patch($path, $callback)
-    {
-        $this->registerRoute('patch', $path, $callback);
+       $this->registerRoute($methodName, ...$args);
     }
 
     public function activate()
     {
-        foreach ($this->routes as $route) {
+        $currentUri = $_SERVER['REQUEST_URI'];
 
-            if (preg_match($route['pattern'], $_SERVER['REQUEST_URI']) === 1) {
+        $currentMethod = strtolower($_SERVER['REQUEST_METHOD']);
 
-            	if (strtolower($_SERVER['REQUEST_METHOD']) !== $route['method']) { // check correct request method.
+        if (!$this->uriExists($currentUri)) {
 
-                    http_response_code(405);
+            if ($this->lastCallbackTypeRegistered === 'middleware') { // handle trailing middlewares    
 
-                    echo "{$method} method not allowed";
+                $this->executeMiddlewares($this->middlewares, []);    
 
-                    return;
-            	}
-                
-                $this->executeMiddlewares($route['middlewares'], $route['urlParams']);
                 return;
             }
-        }
+            
+            http_response_code(404);    
 
-        if ($this->lastTypeRegistered === 'middleware') { // Execute trailing middlewares
+            echo 'Resource not found.';
 
-            $this->executeMiddlewares($this->middlewares, $route['urlParams']);
             return;
         }
+
+        $route = $this->searchForUriAndMethod($currentUri, $currentMethod);
         
-        http_response_code(404);
+        if ($route === null) {
 
-        echo 'Resource not found.';
-    }
+            http_response_code(405);
 
-    private function executeMiddlewares($middlewares, $urlParams)
-    {
-        foreach ($middlewares as $callback) {
+            echo "{$currentMethod} method not supported for {$currentUri}";
 
-            $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);            
-
-            $mainParams = $this->getCallbackParams($refFunc);     
-
-            $this->populateReqObjectWithUrlParams($mainParams, $urlParams);    
-
-            $cbResult = $this->executeMiddleware($callback, $mainParams);
-
-            if ($cbResult === null) return; // break the callback stack if middlwares dont return th next cb.
+            return;
         }
+                
+        $this->executeMiddlewares($route['middlewares'], $route['urlParams']);
     }
 
     public function use(Callable $callable)
     {
         $this->middlewares[] = $callable;
 
-        $this->lastTypeRegistered = 'middleware';
+        $this->lastCallbackTypeRegistered = 'middleware';
     }
 }
