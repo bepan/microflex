@@ -1,6 +1,6 @@
 <?php
 
-namespace Betopan\Http;
+namespace Microflex\Http;
 
 class Request
 {

@@ -1,19 +1,47 @@
 <?php
 
-namespace Betopan\Http;
+namespace Microflex\Http;
 
 class Router extends RouterBase
 {
-    protected $methods = ['get', 'post', 'delete', 'put', 'patch'];
+    protected $methods = [
+       'get',
+       'post', 
+       'delete',
+       'put', 
+       'patch'
+    ];
 
-    public function __call($methodName, $args)
+    public function getRoutes()
     {
-       if (!in_array($methodName, $this->methods)) {
-           
-           throw new \Exception("{$methodName} router method, is not supported.");
-       }
+        return $this->routes;
+    }
+    
+    public function __call($method, $args)
+    {
+        $methodType = $method;
+        
+        list($uri, $callback) = $args;
 
-       $this->registerRoute($methodName, ...$args);
+        if (!in_array($methodType, $this->methods)) {
+           
+            throw new \Exception("{$methodType} method does not exists in router class.");
+        }
+
+        if (count($args) !== 2) {
+
+            throw new \Exception('You must provide exactly 2 arguments to register an http method.');
+        }
+
+        if ( !is_string($uri) ||
+             (!(is_object($callback) && $callback instanceof \Closure) && !is_string($callback)) ) {
+
+            throw new \Exception('Invalid argument types for method registration.');
+        }
+
+       $this->registerRoute($methodType, $uri, $callback);
+
+       $this->lastCallbackTypeRegistered = 'method';
     }
 
     public function activate()

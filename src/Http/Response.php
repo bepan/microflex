@@ -1,9 +1,25 @@
 <?php
 
-namespace Betopan\Http;
+namespace Microflex\Http;
 
 class Response
 {
+    public function redirect($url)
+    {
+        header("Location: {$url}");
+    }
+
+    public function render($filePath, array $data)
+    {
+        $this->setContentType('html');
+        
+        foreach ($data as $key => $value) {
+            ${$key} = $value;
+        }
+
+        require "{$filePath}.php";
+    }
+
     public function send($content, $code = 200)
     {
     	$this->setCode($code);

@@ -9,11 +9,12 @@
     ],
     "autoload": {
     	"psr-4": {
-    	    "Betopan\\": "src/"
+    	    "Microflex\\": "src/"
     	}
     },
     "scripts": {
-        "start": "php -S localhost:8080 -t public/"
+        "start": "php -S localhost:8080 -t public/",
+        "test": "phpunit tests/"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.1"

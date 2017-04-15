@@ -2,3 +2,4 @@ vendor/
 public/
 src/Controllers/
 src/Repositories
+npm-debug.log

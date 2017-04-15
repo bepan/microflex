@@ -1,10 +1,10 @@
 <?php
 
-namespace Betopan\Http;
+namespace Microflex\Http;
 
 abstract class RouterBase
 {
-	protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
+    protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
 
     protected $routes = [];
 
@@ -23,7 +23,19 @@ abstract class RouterBase
     {
         foreach ($middlewares as $callback) {
 
-            $refFunc = is_array($callback) ? new \ReflectionMethod($callback[0], $callback[1]) : new \ReflectionFunction($callback);            
+            if (is_array($callback)) {
+
+                $refFunc = new \ReflectionMethod($callback[0], $callback[1]);
+
+                if ($refFunc->isStatic()) {
+
+                    throw new \Exception('cannot use static methods for controllers.');
+                }
+            }
+            else {
+                
+                $refFunc = new \ReflectionFunction($callback);
+            }
 
             $mainParams = $this->getCallbackParams($refFunc);  
 
@@ -31,7 +43,7 @@ abstract class RouterBase
 
             $this->executeMiddleware($callback, $mainParams);
 
-            if (!$this->nextMiddleware) return; // break the callback stack if middlwares dont return th next cb.
+            if (!$this->nextMiddleware) return; // break the callback stack if middlwares dont execute the next cb.
             
             $this->nextMiddleware = false;
         }
@@ -60,7 +72,7 @@ abstract class RouterBase
         $callback(...$mainParams);
     }
 
-    protected function populateReqObjectWithUrlParams(&$mainParams, $urlParams)
+    protected function populateReqObjectWithUrlParams($mainParams, $urlParams)
     {
         $reqObject = null;
 
@@ -119,7 +131,7 @@ abstract class RouterBase
 
                     if (method_exists($classType, '__construct')) {        
 
-                        $subrefFunc = new \ReflectionMethod($classType, '__construct');        
+                        $subrefFunc = new \ReflectionMethod($classType, '__construct');       
 
                         $subfinalParams = $this->getCallbackParams($subrefFunc);
                     }
@@ -138,14 +150,9 @@ abstract class RouterBase
         return $finalParams;
     }
 
-    protected function registerRoute($methodType, $path, $callback)
+    protected function registerRoute($method, $path, $callback)
     {
-        if (!is_callable($callback) && !is_string($callback)) {
-
-            throw new \Exception('Invalid callback type passed to the router.');
-        }
-        
-        $callback = $this->parseIfCallbackString($callback); // parse if callback is a class method.
+        $callback = $this->parseCallback($callback);
         
         $urlParams = $this->getUrlParamNames($path);
         
@@ -153,18 +160,19 @@ abstract class RouterBase
 
         // attach middlewares to callback
         $this->middlewaresUsed = array_merge($this->middlewaresUsed, $this->middlewares);
+
         $this->middlewares = [];
+        
         $middlewares = $this->middlewaresUsed;
+        
         $middlewares[] = $callback;
         
         $this->routes[] = [ // saving the route in route array.
-            'method'      => $methodType,
+            'method'      => $method,
             'pattern'     => $fullUrlRegex,
             'middlewares' => $middlewares,
             'urlParams'   => $urlParams
         ];
-
-        $this->lastCallbackTypeRegistered = 'method';
     }
 
     protected function buildUrlRegex($path)
@@ -179,18 +187,19 @@ abstract class RouterBase
         return "/^{$escapedPath}{$queryStringPattern}$/";
     }
 
-    protected function parseIfCallbackString($callback)
-    {
+    protected function parseCallback($callback)
+    {        
         if (is_string($callback)) {
 
-            if (preg_match('/^[a-zA-Z\\\\]+@[a-zA-Z0-9]+$/', $callback) === 0) {
+            if (preg_match('/^.+@.+$/', $callback) === 0) {
 
                 throw new \Exception('Invalid string callback format.');
             }
-            
+
             return explode('@', $callback);
         }
-
+        
+        // do nothing if regular closure
         return $callback;
     }
 
