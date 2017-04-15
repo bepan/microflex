@@ -4,7 +4,7 @@ namespace Microflex\Http;
 
 class Router extends RouterBase
 {
-    protected $methods = [
+    public $methods = [
        'get',
        'post', 
        'delete',
@@ -14,34 +14,49 @@ class Router extends RouterBase
 
     public function getRoutes()
     {
+        // get original routes as a copy
         return $this->routes;
     }
     
     public function __call($method, $args)
     {
-        $methodType = $method;
-        
-        list($uri, $callback) = $args;
-
-        if (!in_array($methodType, $this->methods)) {
+        if (!in_array($method, $this->methods)) {
            
-            throw new \Exception("{$methodType} method does not exists in router class.");
+            throw new \Exception("{$method} method does not exists in router class.");
+        }
+        
+        $uri = "{$this->routePrefix}{$args[0]}";
+        $ownMiddlewares = [];
+
+        if (count($args) === 2) {
+
+            $callback = $args[1];
+        }
+        else {
+
+            $callback = $args[2];
+            $ownMiddlewares = $args[1];
         }
 
-        if (count($args) !== 2) {
+        if (!is_string($uri)) {
 
-            throw new \Exception('You must provide exactly 2 arguments to register an http method.');
+            throw new \Exception('Uri must be a string.');
         }
 
-        if ( !is_string($uri) ||
-             (!(is_object($callback) && $callback instanceof \Closure) && !is_string($callback)) ) {
+        $this->validateCallback($callback); // validate callback
+        
+        $this->registerRoute($method, $uri, $ownMiddlewares, $callback);
 
-            throw new \Exception('Invalid argument types for method registration.');
+        $this->lastCallbackTypeRegistered = 'method';
+    }
+
+    private function validateCallback($callback)
+    {
+        if ( !(is_object($callback) && $callback instanceof \Closure) && 
+             !is_string($callback) ) {
+
+            throw new \Exception('Callback must be a closure or a string');
         }
-
-       $this->registerRoute($methodType, $uri, $callback);
-
-       $this->lastCallbackTypeRegistered = 'method';
     }
 
     public function activate()
@@ -54,7 +69,7 @@ class Router extends RouterBase
 
             if ($this->lastCallbackTypeRegistered === 'middleware') { // handle trailing middlewares    
 
-                $this->executeMiddlewares($this->middlewares, []);    
+                $this->executeMiddlewares($this->globalMiddlewares, []);    
 
                 return;
             }
@@ -80,10 +95,28 @@ class Router extends RouterBase
         $this->executeMiddlewares($route['middlewares'], $route['urlParams']);
     }
 
-    public function use(Callable $callable)
+    public function use(...$callbacks)
     {
-        $this->middlewares[] = $callable;
+        foreach($callbacks as $callback) {
 
-        $this->lastCallbackTypeRegistered = 'middleware';
+            $this->validateCallback($callback);    
+
+            $this->globalMiddlewares[] = $this->parseCallback($callback);    
+
+            $this->lastCallbackTypeRegistered = 'middleware';
+        }
+    }
+
+    public function group(array $config, \Closure $closure)
+    {
+        $this->routePrefix = $config['prefix'];
+
+        $this->groupMiddlewares = $config['middlewares'];
+
+        $closure();
+
+        $this->routePrefix = '';
+
+        $this->groupMiddlewares = [];
     }
 }

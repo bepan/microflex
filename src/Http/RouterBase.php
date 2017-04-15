@@ -8,15 +8,19 @@ abstract class RouterBase
 
     protected $routes = [];
 
-    protected $middlewares = [];
+    protected $globalMiddlewares = [];
 
-    protected $middlewaresUsed = [];
+    protected $globalMiddlewaresUsed = [];
 
     protected $lastCallbackTypeRegistered = 'method'; // to check if the last callback was middleware or http method.
     
     protected $cachedObjects = []; // to deal with singleton pattern
     
     protected $nextMiddleware = false;
+
+    protected $routePrefix = '';
+
+    protected $groupMiddlewares = [];
 
 
     protected function executeMiddlewares($middlewares, $urlParams)
@@ -150,20 +154,32 @@ abstract class RouterBase
         return $finalParams;
     }
 
-    protected function registerRoute($method, $path, $callback)
+    protected function registerRoute($method, $path, $ownMiddlewares, $callback)
     {
         $callback = $this->parseCallback($callback);
+
+        $ownMiddlewaresParsed = array_map(function($value) {
+
+            return $this->parseCallback($value);
+
+        }, $ownMiddlewares);
+
+        $groupMiddlewaresParsed = array_map(function($value) {
+
+            return $this->parseCallback($value);
+            
+        }, $this->groupMiddlewares);
         
         $urlParams = $this->getUrlParamNames($path);
         
         $fullUrlRegex = $this->buildUrlRegex($path);
 
-        // attach middlewares to callback
-        $this->middlewaresUsed = array_merge($this->middlewaresUsed, $this->middlewares);
+        // attach global and own middlewares to callback.
+        $this->globalMiddlewaresUsed = array_merge($this->globalMiddlewaresUsed, $this->globalMiddlewares);
 
-        $this->middlewares = [];
+        $this->globalMiddlewares = [];
         
-        $middlewares = $this->middlewaresUsed;
+        $middlewares = array_merge($this->globalMiddlewaresUsed, $groupMiddlewaresParsed, $ownMiddlewaresParsed);
         
         $middlewares[] = $callback;
         
@@ -191,12 +207,19 @@ abstract class RouterBase
     {        
         if (is_string($callback)) {
 
-            if (preg_match('/^.+@.+$/', $callback) === 0) {
+            if (preg_match('/^[^@]+(@[^@]+)?$/', $callback) === 0) {
 
-                throw new \Exception('Invalid string callback format.');
+                throw new \Exception('Invalid class method string format.');
             }
 
-            return explode('@', $callback);
+            $cbSplited = explode('@', $callback);
+
+            if (count($cbSplited) === 1) {
+
+                $cbSplited[] = 'run'; // default run method
+            }
+
+            return $cbSplited;
         }
         
         // do nothing if regular closure
