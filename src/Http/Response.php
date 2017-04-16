@@ -4,6 +4,16 @@ namespace Microflex\Http;
 
 class Response
 {
+    public function setCookie($name, $value = "", $expire = 0, $path = '/', $domain = '', $secure = false, $httpOnly = false)
+    {
+        setcookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
+    }
+
+    public function unsetCookie($name, $path = '/')
+    {
+        setcookie($name, "", time() - 3600, $path);
+    }
+
     public function redirect($url)
     {
         header("Location: {$url}");
@@ -27,8 +37,10 @@ class Response
         echo $content;
     }
 
-    public function json(array $content)
+    public function json(array $content, $code = 200)
     {
+        $this->setCode($code);
+
         $this->setContentType('json');
 
         echo json_encode($content);
