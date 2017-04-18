@@ -4,14 +4,6 @@ namespace Microflex\Http;
 
 class Router extends RouterBase
 {
-    public $methods = [
-       'get',
-       'post', 
-       'delete',
-       'put', 
-       'patch'
-    ];
-
     public function getRoutes()
     {
         // get original routes as a copy
@@ -24,39 +16,12 @@ class Router extends RouterBase
            
             throw new \Exception("{$method} method does not exists in router class.");
         }
-        
-        $uri = "{$this->routePrefix}{$args[0]}";
-        $ownMiddlewares = [];
 
-        if (count($args) === 2) {
-
-            $callback = $args[1];
-        }
-        else {
-
-            $callback = $args[2];
-            $ownMiddlewares = $args[1];
-        }
-
-        if (!is_string($uri)) {
-
-            throw new \Exception('Uri must be a string.');
-        }
-
-        $this->validateCallback($callback); // validate callback
+        list($uri, $ownMiddlewares, $callback) = $this->validateMethodArgs($args);
         
         $this->registerRoute($method, $uri, $ownMiddlewares, $callback);
 
         $this->lastCallbackTypeRegistered = 'method';
-    }
-
-    private function validateCallback($callback)
-    {
-        if ( !(is_object($callback) && $callback instanceof \Closure) && 
-             !is_string($callback) ) {
-
-            throw new \Exception('Callback must be a closure or a string');
-        }
     }
 
     public function activate()
@@ -95,8 +60,13 @@ class Router extends RouterBase
         $this->executeMiddlewares($route['middlewares'], $route['urlParams']);
     }
 
-    public function use(...$callbacks)
+    public function handle404(...$callbacks)
     {
+        if (count($callbacks) === 0) {
+
+            throw new \Exception('You must provide at least 1 argument to the use method.');
+        }
+
         foreach($callbacks as $callback) {
 
             $this->validateCallback($callback);    
@@ -107,16 +77,17 @@ class Router extends RouterBase
         }
     }
 
-    public function group(array $config, \Closure $closure)
+    public function group($prefix, \Closure $closure)
     {
-        $this->routePrefix = $config['prefix'];
+        if (!is_string($prefix)) {
 
-        $this->groupMiddlewares = $config['middlewares'];
+            throw new \Exception('The prefix must be a string.');
+        }
+
+        $this->routePrefixes[] = $prefix;
 
         $closure();
 
-        $this->routePrefix = '';
-
-        $this->groupMiddlewares = [];
+        array_pop($this->routePrefixes);
     }
 }

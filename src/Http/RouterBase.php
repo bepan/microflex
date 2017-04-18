@@ -4,6 +4,14 @@ namespace Microflex\Http;
 
 abstract class RouterBase
 {
+    protected $methods = [
+       'get',
+       'post', 
+       'delete',
+       'put', 
+       'patch'
+    ];
+
     protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
 
     protected $routes = [];
@@ -14,11 +22,11 @@ abstract class RouterBase
 
     protected $lastCallbackTypeRegistered = 'method'; // to check if the last callback was middleware or http method.
     
-    protected $cachedObjects = []; // to deal with singleton pattern
+    protected $cachedArguments = []; // to deal with singleton pattern
     
     protected $nextMiddleware = false;
 
-    protected $routePrefix = '';
+    protected $routePrefixes = [];
 
     protected $groupMiddlewares = [];
 
@@ -65,7 +73,7 @@ abstract class RouterBase
 
                 $classDependencies = $this->getCallbackParams($classRefFunc);
             }
-
+        
             $object = new $callback[0](...$classDependencies);
 
             $object->{$callback[1]}(...$mainParams);
@@ -119,9 +127,9 @@ abstract class RouterBase
 
             $classType = $splitParam[2];
             
-            if (array_key_exists($classType, $this->cachedObjects)) {
+            if (array_key_exists($classType, $this->cachedArguments)) {
                 
-                $finalParam = $this->cachedObjects[$classType];
+                $finalParam = $this->cachedArguments[$classType];
             }
             else {
 
@@ -144,7 +152,7 @@ abstract class RouterBase
 
                     $finalParam = $finalObject;
 
-                    $this->cachedObjects[$classType] = $finalObject;
+                    $this->cachedArguments[$classType] = $finalObject;
                 }
             }
 
@@ -248,6 +256,7 @@ abstract class RouterBase
 
     protected function escapeForRegex($source)
     {
+        // regex path escape
         return preg_replace('/\//', '\/', $source);
     }
 
@@ -275,5 +284,53 @@ abstract class RouterBase
         }
 
         return null;
+    }
+
+    protected function validateCallback($callback)
+    {
+        if ( !(is_object($callback) && $callback instanceof \Closure) && 
+             !is_string($callback) ) {
+
+            throw new \Exception('Callback must be a closure or a string');
+        }
+    }
+
+    protected function validateMethodArgs($args)
+    {
+        if (count($args) !== 2 && count($args) !== 3) {
+ 
+            throw new \Exception('Register a method expects 2 or 3 arguments.');
+        }
+        
+        // validate uri
+        $prefixes = implode('', $this->routePrefixes);
+        $uri = "{$prefixes}{$args[0]}";
+
+        if (!is_string($uri)) {
+
+            throw new \Exception('Uri must be a string.');
+        }
+
+        $ownMiddlewares = [];
+
+        if (count($args) === 2) {
+
+            $callback = $args[1];
+        }
+        else {
+
+            if (!is_array($args[1])) {
+
+                throw new \Exception('If register a method with 3 args, the second must be an array of middlewares.');
+            }
+
+            $callback = $args[2];
+
+            $ownMiddlewares = $args[1];
+        }
+
+        $this->validateCallback($callback); // validate callback
+
+        return [ $uri, $ownMiddlewares, $callback ];
     }
 }
