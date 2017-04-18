@@ -16,10 +16,6 @@ abstract class RouterBase
 
     protected $routes = [];
 
-    protected $globalMiddlewares = [];
-
-    protected $globalMiddlewaresUsed = [];
-
     protected $lastCallbackTypeRegistered = 'method'; // to check if the last callback was middleware or http method.
     
     protected $cachedArguments = []; // to deal with singleton pattern
@@ -182,12 +178,8 @@ abstract class RouterBase
         
         $fullUrlRegex = $this->buildUrlRegex($path);
 
-        // attach global and own middlewares to callback.
-        $this->globalMiddlewaresUsed = array_merge($this->globalMiddlewaresUsed, $this->globalMiddlewares);
-
-        $this->globalMiddlewares = [];
-        
-        $middlewares = array_merge($this->globalMiddlewaresUsed, $groupMiddlewaresParsed, $ownMiddlewaresParsed);
+        // attach group and own middlewares to callback.
+        $middlewares = array_merge($groupMiddlewaresParsed, $ownMiddlewaresParsed);
         
         $middlewares[] = $callback;
         
@@ -304,14 +296,16 @@ abstract class RouterBase
         
         // validate uri
         $prefixes = implode('', $this->routePrefixes);
-        $uri = "{$prefixes}{$args[0]}";
+
+        $ownMiddlewares = [];
+        
+        // validate uri
+        $uri = $args[0];
 
         if (!is_string($uri)) {
 
             throw new \Exception('Uri must be a string.');
         }
-
-        $ownMiddlewares = [];
 
         if (count($args) === 2) {
 
@@ -331,6 +325,6 @@ abstract class RouterBase
 
         $this->validateCallback($callback); // validate callback
 
-        return [ $uri, $ownMiddlewares, $callback ];
+        return [ "{$prefixes}{$uri}", $ownMiddlewares, $callback ];
     }
 }

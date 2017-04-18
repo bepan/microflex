@@ -77,17 +77,43 @@ class Router extends RouterBase
         }
     }
 
-    public function group($prefix, \Closure $closure)
+    public function group(array $config, \Closure $closure)
     {
-        if (!is_string($prefix)) {
+        $middlewareKey = 'middleware';
 
-            throw new \Exception('The prefix must be a string.');
+        if ( count($config) !== 1 || 
+             (!array_key_exists('prefix', $config) && !array_key_exists($middlewareKey, $config)) ) {
+
+            throw new \Exception('The criteria group array must contain only one key. (prefix or middleware)');
         }
 
-        $this->routePrefixes[] = $prefix;
+        if (array_key_exists($middlewareKey, $config)) {
+            
+            if (is_array($config[$middlewareKey])) {
+
+                $this->groupMiddlewares = array_merge($this->groupMiddlewares, $config[$middlewareKey]);
+            }
+            elseif (is_string($config[$middlewareKey])) {
+
+                $this->groupMiddlewares[] = $config[$middlewareKey];
+            }
+            else {
+
+                throw new \Exception('The middlewares key must be array or string.');
+            }
+        }
+        else {
+
+            if (!is_string($config['prefix'])) {    
+
+                throw new \Exception('The prefix must be a string.');
+            }
+
+            $this->routePrefixes[] = $config['prefix'];
+        }
 
         $closure();
-
-        array_pop($this->routePrefixes);
+        
+        array_key_exists($middlewareKey, $config) ? array_pop($this->groupMiddlewares) : array_pop($this->routePrefixes);
     }
 }
