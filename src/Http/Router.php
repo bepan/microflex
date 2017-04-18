@@ -20,8 +20,6 @@ class Router extends RouterBase
         list($uri, $ownMiddlewares, $callback) = $this->validateMethodArgs($args);
         
         $this->registerRoute($method, $uri, $ownMiddlewares, $callback);
-
-        $this->lastCallbackTypeRegistered = 'method';
     }
 
     public function activate()
@@ -30,21 +28,8 @@ class Router extends RouterBase
 
         $currentMethod = strtolower($_SERVER['REQUEST_METHOD']);
 
-        if (!$this->uriExists($currentUri)) {
-
-            if ($this->lastCallbackTypeRegistered === 'middleware') { // handle trailing middlewares    
-
-                $this->executeMiddlewares($this->globalMiddlewares, []);    
-
-                return;
-            }
-            
-            http_response_code(404);    
-
-            echo 'Resource not found.';
-
-            return;
-        }
+        // uri existance
+        $this->handleUriExistance($currentUri);
 
         $route = $this->searchForUriAndMethod($currentUri, $currentMethod);
         
@@ -71,9 +56,7 @@ class Router extends RouterBase
 
             $this->validateCallback($callback);    
 
-            $this->globalMiddlewares[] = $this->parseCallback($callback);    
-
-            $this->lastCallbackTypeRegistered = 'middleware';
+            $this->notFoundMiddlewares[] = $this->parseCallback($callback);
         }
     }
 

@@ -15,8 +15,6 @@ abstract class RouterBase
     protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
 
     protected $routes = [];
-
-    protected $lastCallbackTypeRegistered = 'method'; // to check if the last callback was middleware or http method.
     
     protected $cachedArguments = []; // to deal with singleton pattern
     
@@ -25,6 +23,8 @@ abstract class RouterBase
     protected $routePrefixes = [];
 
     protected $groupMiddlewares = [];
+
+    protected $notFoundMiddlewares = [];
 
 
     protected function executeMiddlewares($middlewares, $urlParams)
@@ -326,5 +326,24 @@ abstract class RouterBase
         $this->validateCallback($callback); // validate callback
 
         return [ "{$prefixes}{$uri}", $ownMiddlewares, $callback ];
+    }
+
+    protected function handleUriExistance($currentUri)
+    {
+        if (!$this->uriExists($currentUri)) {
+
+            if (count($this->notFoundMiddlewares) > 0) { // handle trailing middlewares    
+
+                $this->executeMiddlewares($this->notFoundMiddlewares, []);    
+
+                exit();
+            }
+            
+            http_response_code(404);    
+
+            echo 'Resource not found.';
+
+            exit();
+        }
     }
 }
