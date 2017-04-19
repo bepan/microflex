@@ -14,18 +14,38 @@ class Response
         setcookie($name, "", time() - 3600, $path);
     }
 
-    public function redirect($url)
+    public function redirect($url, $withInput = false, array $flashedData = [])
     {
+        if ($withInput) {
+
+            session_start();
+
+            $request = new Request;
+
+            $_SESSION['php_input_session'] = $request->all();
+        }
+
+        if (count($flashedData) > 0) {
+
+            session_start();
+
+            foreach ($flashedData as $key => $value) {
+
+                $_SESSION[$key] = [ htmlspecialchars($value), true ];
+            }
+        }
+
         header("Location: {$url}");
 
-        return $this;
+        exit();
     }
 
-    public function render($filePath, array $data)
+    public function render($filePath, array $data = [])
     {
         $this->setContentType('html');
         
         foreach ($data as $key => $value) {
+
             ${$key} = $value;
         }
 

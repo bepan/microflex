@@ -72,14 +72,14 @@ class Request
     {
         session_start();
 
-        $_SESSION[$key] = htmlspecialchars($value);
+        $_SESSION[$key] = [ htmlspecialchars($value), false ];
     }
 
     public function getSessionValue($key)
     {
         session_start();
 
-        return htmlspecialchars($_SESSION[$key] ?? null);
+        return htmlspecialchars($_SESSION[$key][0] ?? null);
     }
 
     public function getSession()

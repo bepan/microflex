@@ -4,6 +4,25 @@ namespace Microflex\Http;
 
 class Router extends RouterBase
 {
+    public function __construct()
+    {
+        // Set input session from forms.
+        session_start();
+
+        global $php_input_session;
+
+        if (isset($_SESSION['php_input_session'])) {
+
+            $php_input_session = $_SESSION['php_input_session'];
+
+            unset($_SESSION['php_input_session']);
+
+            return;
+        }
+        
+        $php_input_session = [];
+    }
+
     public function getRoutes()
     {
         // get original routes as a copy
@@ -64,11 +83,7 @@ class Router extends RouterBase
     {
         $middlewareKey = 'middleware';
 
-        if ( count($config) !== 1 || 
-             (!array_key_exists('prefix', $config) && !array_key_exists($middlewareKey, $config)) ) {
-
-            throw new \Exception('The criteria group array must contain only one key. (prefix or middleware)');
-        }
+        $this->validateGroupConfig($config, $middlewareKey);
 
         if (array_key_exists($middlewareKey, $config)) {
             
@@ -76,21 +91,12 @@ class Router extends RouterBase
 
                 $this->groupMiddlewares = array_merge($this->groupMiddlewares, $config[$middlewareKey]);
             }
-            elseif (is_string($config[$middlewareKey])) {
+            else {
 
                 $this->groupMiddlewares[] = $config[$middlewareKey];
             }
-            else {
-
-                throw new \Exception('The middlewares key must be array or string.');
-            }
         }
         else {
-
-            if (!is_string($config['prefix'])) {    
-
-                throw new \Exception('The prefix must be a string.');
-            }
 
             $this->routePrefixes[] = $config['prefix'];
         }
@@ -99,4 +105,5 @@ class Router extends RouterBase
         
         array_key_exists($middlewareKey, $config) ? array_pop($this->groupMiddlewares) : array_pop($this->routePrefixes);
     }
+    
 }

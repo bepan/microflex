@@ -27,7 +27,7 @@ abstract class RouterBase
     protected $notFoundMiddlewares = [];
 
 
-    protected function executeMiddlewares($middlewares, $urlParams)
+    protected function executeMiddlewares($middlewares, $urlParams = [])
     {
         foreach ($middlewares as $callback) {
 
@@ -334,7 +334,7 @@ abstract class RouterBase
 
             if (count($this->notFoundMiddlewares) > 0) { // handle trailing middlewares    
 
-                $this->executeMiddlewares($this->notFoundMiddlewares, []);    
+                $this->executeMiddlewares($this->notFoundMiddlewares);    
 
                 exit();
             }
@@ -344,6 +344,30 @@ abstract class RouterBase
             echo 'Resource not found.';
 
             exit();
+        }
+    }
+
+    protected function validateGroupConfig(array $config, $middlewareKey)
+    {
+        if ( count($config) !== 1 || 
+             (!array_key_exists('prefix', $config) && !array_key_exists($middlewareKey, $config)) ) {
+
+            throw new \Exception('The criteria group array must contain only one key. (prefix or middleware)');
+        }
+
+        if (array_key_exists($middlewareKey, $config)) {
+            
+            if ( !is_array($config[$middlewareKey]) && !is_string($config[$middlewareKey]) ) {
+
+                throw new \Exception('The middlewares key must be an array or string.');
+            }
+        }
+        else {
+
+            if (!is_string($config['prefix'])) {        
+
+                throw new \Exception('The prefix must be a string.');
+            }
         }
     }
 }
