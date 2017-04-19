@@ -2,6 +2,16 @@
 
 use PHPUnit\Framework\TestCase;
 
+class FooController
+{
+    public static $methodWasCalled = false;
+
+    public function index()
+    {
+        self::$methodWasCalled = true;
+    }
+}
+
 $closureCalled = false;
 
 $closure = function() {
@@ -11,12 +21,6 @@ $closure = function() {
 
 class RouterTest extends TestCase
 {
-    public function setUp()
-    {
-        global $closureCalled;
-        $closureCalled = false;
-    }
-
     public function test_register_route_with_closure()
     {
         global $closure, $closureCalled;
@@ -32,5 +36,22 @@ class RouterTest extends TestCase
         $stubRouter->activate();
 
         $this->assertTrue($closureCalled);
+    }
+
+    public function test_register_route_with_class_method()
+    {
+        global $closure, $closureCalled;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/';
+
+        $stubRouter = $this->getMockBuilder(Microflex\Http\Router::class)
+                           ->setMethods(['setInputSession'])
+                           ->getMock();
+
+        $stubRouter->get('/', 'FooController@index'); // Here is the key part
+
+        $stubRouter->activate();
+
+        $this->assertTrue(FooController::$methodWasCalled);
     }
 }
