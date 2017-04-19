@@ -17,6 +17,8 @@ class Response
     public function redirect($url)
     {
         header("Location: {$url}");
+
+        return $this;
     }
 
     public function render($filePath, array $data)

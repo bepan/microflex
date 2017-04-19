@@ -4,40 +4,96 @@ namespace Microflex\Http;
 
 class Request
 {
-    public function input($key)
-    {	
-        return htmlspecialchars($_GET[$key] ?? $_POST[$key] ?? null);
-    }
-
-    public function getCookie($name = null)
+    public function all()
     {
-        if ($name === null) {
-            
-            return array_map(function($value) {
-                
-                return htmlspecialchars($value);
+        $_AJAX = json_decode(file_get_contents('php://input'), true);
+     
+        $headers = getallheaders();
 
-            }, $_COOKIE);
+        if ( isset($headers['Content-Type']) && $headers['Content-Type'] === 'application/json' ) {
+
+            return array_map(function($value) {
+                return htmlspecialchars($value);
+            }, $_AJAX);
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
+            return array_map(function($value) {
+                return htmlspecialchars($value);
+            }, $_GET);
         }
 
+        return array_map(function($value) {
+            return htmlspecialchars($value);
+        }, $_POST);
+    }
+
+    public function input($key)
+    {
+        $_AJAX = json_decode(file_get_contents('php://input'), true);
+
+        return htmlspecialchars($_GET[$key] ?? $_POST[$key] ?? $_AJAX[$key] ?? null);
+    }
+
+    public function getHeader($name)
+    {
+        $headers = getallheaders();
+
+        return htmlspecialchars($headers[$name] ?? null);
+    }
+
+    public function getHeaders()
+    {
+        $headers = getallheaders();
+        
+        return array_map(function($value) {
+            
+            return htmlspecialchars($value);
+
+        }, $headers);
+    }
+
+    public function getCookie($name)
+    {
         return htmlspecialchars($_COOKIE[$name] ?? null);
     }
 
-    public function setSession($key, $value)
+    public function getCookies()
+    {
+        return array_map(function($value) {
+            
+            return htmlspecialchars($value);
+
+        }, $_COOKIE);     
+    }
+
+    public function setSessionValue($key, $value)
     {
         session_start();
 
         $_SESSION[$key] = htmlspecialchars($value);
     }
 
-    public function getSession($key)
+    public function getSessionValue($key)
     {
         session_start();
 
         return htmlspecialchars($_SESSION[$key] ?? null);
     }
 
-    public function unsetSession($key)
+    public function getSession()
+    {
+        session_start();
+
+        return array_map(function($value) {
+            
+            return htmlspecialchars($value);
+
+        }, $_SESSION); 
+    }
+
+    public function unsetSessionValue($key)
     {
         session_start();
 
