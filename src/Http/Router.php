@@ -6,27 +6,7 @@ class Router extends RouterBase
 {
     public function __construct()
     {
-        // Set input session from forms.
-        session_start();
-
-        global $php_input_session;
-
-        if (isset($_SESSION['php_input_session'])) {
-
-            $php_input_session = $_SESSION['php_input_session'];
-
-            unset($_SESSION['php_input_session']);
-
-            return;
-        }
-        
-        $php_input_session = [];
-    }
-
-    public function getRoutes()
-    {
-        // get original routes as a copy
-        return $this->routes;
+        $this->setInputSession();
     }
     
     public function __call($method, $args)

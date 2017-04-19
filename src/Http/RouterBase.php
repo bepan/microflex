@@ -25,7 +25,25 @@ abstract class RouterBase
     protected $groupMiddlewares = [];
 
     protected $notFoundMiddlewares = [];
+    
+    protected function setInputSession()
+    {
+        // Set input session from forms.
+        session_start();
 
+        global $php_input_session;
+
+        if (isset($_SESSION['php_input_session'])) {
+
+            $php_input_session = $_SESSION['php_input_session'];
+
+            unset($_SESSION['php_input_session']);
+
+            return;
+        }
+        
+        $php_input_session = [];
+    }
 
     protected function executeMiddlewares($middlewares, $urlParams = [])
     {

@@ -2,6 +2,8 @@
 
 - Register routes with closures midd.
 - Register routes with a class method midd.
+- Check that path and method match register routes.
+- Recursive Dependency Injection as a singleton.
 - Match the current uri with the register uri pattern.
 - Register middlewares as route level.
 - Register 404 middlewares.
