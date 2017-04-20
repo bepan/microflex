@@ -33,7 +33,7 @@ abstract class RouterBase
 
         global $php_input_session;
 
-        if (isset($_SESSION['php_input_session'])) {
+        if ( isset($_SESSION['php_input_session']) ) {
 
             $php_input_session = $_SESSION['php_input_session'];
 
