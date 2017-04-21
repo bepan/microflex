@@ -8,20 +8,20 @@ class Request
     {
         $_AJAX = json_decode(file_get_contents('php://input'), true);
      
-        $headers = getallheaders();
+        $headers = $this->getHeaders();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
+            return array_map(function($value) {
+                return htmlspecialchars($value);
+            }, $_GET);
+        }
 
         if ( isset($headers['Content-Type']) && $headers['Content-Type'] === 'application/json' ) {
 
             return array_map(function($value) {
                 return htmlspecialchars($value);
             }, $_AJAX);
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-
-            return array_map(function($value) {
-                return htmlspecialchars($value);
-            }, $_GET);
         }
 
         return array_map(function($value) {
@@ -56,6 +56,7 @@ class Request
 
     public function getCookie($name)
     {
+        //
         return htmlspecialchars($_COOKIE[$name] ?? null);
     }
 

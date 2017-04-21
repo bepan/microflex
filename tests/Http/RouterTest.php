@@ -22,7 +22,7 @@ class RouterTest extends TestCase
         ZooMiddleware::$wasCalled = false;
     }
 
-    public function test_register_route_with_closure()
+    public function test_register_get_route_with_closure()
     {
         global $fooClosure, $wasFooClosureCalled;
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -33,6 +33,74 @@ class RouterTest extends TestCase
                        ->getMock();
 
         $router->get('/home', $fooClosure); // Here is the key part
+
+        $router->activate();
+
+        $this->assertTrue($wasFooClosureCalled);
+    }
+
+    public function test_register_post_route_with_closure()
+    {
+        global $fooClosure, $wasFooClosureCalled;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/home';
+
+        $router = $this->getMockBuilder(Microflex\Http\Router::class)
+                       ->setMethods(['setInputSession'])
+                       ->getMock();
+
+        $router->post('/home', $fooClosure); // Here is the key part
+
+        $router->activate();
+
+        $this->assertTrue($wasFooClosureCalled);
+    }
+
+    public function test_register_put_route_with_closure()
+    {
+        global $fooClosure, $wasFooClosureCalled;
+        $_SERVER['REQUEST_METHOD'] = 'PUT';
+        $_SERVER['REQUEST_URI'] = '/home';
+
+        $router = $this->getMockBuilder(Microflex\Http\Router::class)
+                       ->setMethods(['setInputSession'])
+                       ->getMock();
+
+        $router->put('/home', $fooClosure); // Here is the key part
+
+        $router->activate();
+
+        $this->assertTrue($wasFooClosureCalled);
+    }
+
+    public function test_register_delete_route_with_closure()
+    {
+        global $fooClosure, $wasFooClosureCalled;
+        $_SERVER['REQUEST_METHOD'] = 'DELETE';
+        $_SERVER['REQUEST_URI'] = '/home';
+
+        $router = $this->getMockBuilder(Microflex\Http\Router::class)
+                       ->setMethods(['setInputSession'])
+                       ->getMock();
+
+        $router->delete('/home', $fooClosure); // Here is the key part
+
+        $router->activate();
+
+        $this->assertTrue($wasFooClosureCalled);
+    }
+
+    public function test_register_patch_route_with_closure()
+    {
+        global $fooClosure, $wasFooClosureCalled;
+        $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        $_SERVER['REQUEST_URI'] = '/home';
+
+        $router = $this->getMockBuilder(Microflex\Http\Router::class)
+                       ->setMethods(['setInputSession'])
+                       ->getMock();
+
+        $router->patch('/home', $fooClosure); // Here is the key part
 
         $router->activate();
 

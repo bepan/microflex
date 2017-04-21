@@ -66,6 +66,7 @@ class Router extends RouterBase
     public function group(array $config, \Closure $closure)
     {
         $middlewareKey = 'middleware';
+        
         $numberOfMiddlewaresToRemove = 1;
 
         $this->validateGroupConfig($config, $middlewareKey);
