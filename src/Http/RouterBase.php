@@ -311,9 +311,6 @@ abstract class RouterBase
  
             throw new \Exception('Register a method expects 2 or 3 arguments.');
         }
-        
-        // validate uri
-        $prefixes = implode('', $this->routePrefixes);
 
         $ownMiddlewares = [];
         
@@ -341,9 +338,14 @@ abstract class RouterBase
             $ownMiddlewares = $args[1];
         }
 
+        foreach($ownMiddlewares as $middleware) { // validate middlewares
+
+            $this->validateCallback($middleware);
+        }
+
         $this->validateCallback($callback); // validate callback
 
-        return [ "{$prefixes}{$uri}", $ownMiddlewares, $callback ];
+        return [ $uri, $ownMiddlewares, $callback ];
     }
 
     protected function handleUriExistance($currentUri)
@@ -354,15 +356,17 @@ abstract class RouterBase
 
                 $this->executeMiddlewares($this->notFoundMiddlewares);    
 
-                exit();
+                return false;
             }
             
             http_response_code(404);    
 
             echo 'Resource not found.';
 
-            exit();
+            return false;
         }
+
+        return true;
     }
 
     protected function validateGroupConfig(array $config, $middlewareKey)
@@ -375,7 +379,18 @@ abstract class RouterBase
 
         if (array_key_exists($middlewareKey, $config)) {
             
-            if ( !is_array($config[$middlewareKey]) && !is_string($config[$middlewareKey]) ) {
+            if (is_array($config[$middlewareKey])) {
+         
+                foreach($config[$middlewareKey] as $middleware) {
+
+                    $this->validateCallback($middleware);
+                }
+            }
+            elseif (is_string($config[$middlewareKey])) {
+                
+                $this->validateCallback($config[$middlewareKey]);
+            }
+            else {
 
                 throw new \Exception('The middlewares key must be an array or string.');
             }

@@ -2,7 +2,12 @@
 
 define('WITH_INPUT', true);
 
-function old($name)
+function partial($path)
+{
+    require($path);
+}
+
+function input($name)
 {
     global $php_input_session;
 
@@ -25,7 +30,7 @@ function session($name)
     return $sessionValue[0];
 }
 
-function is_session($name)
+function has_session($name)
 {
     session_start();
 

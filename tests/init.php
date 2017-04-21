@@ -1,5 +1,6 @@
 <?php
 
+// CLOSURES
 // =================================================================
 $wasFooClosureCalled = false;
 
@@ -35,6 +36,7 @@ $zooClosure = function(FooRepo $fooRepo) {
 };
 // -----------------------------------------------------------------
 
+// MIDDLEWARE CONTROLLERS
 // =================================================================
 class FooController
 {
@@ -100,12 +102,31 @@ class DBConn
 }
 // -----------------------------------------------------------------
 
+// PURE MIDDLEWARES
 // =================================================================
 $wasClosureFooMiddCalled = false;
 
 class FooMiddleware
 {
 	public static $wasCalled = false;
+    public function run(Callable $next) {
+        self::$wasCalled = true;
+        $next();
+    }
+}
+
+class BarMiddleware
+{
+    public static $wasCalled = false;
+    public function run(Callable $next) {
+        self::$wasCalled = true;
+        $next();
+    }
+}
+
+class ZooMiddleware
+{
+    public static $wasCalled = false;
     public function run(Callable $next) {
         self::$wasCalled = true;
         $next();

@@ -6,6 +6,8 @@ class Router extends RouterBase
 {
     public function __construct()
     {
+        // init stuff
+        require_once __DIR__ . '/../helpers.php';
         $this->setInputSession();
     }
     
@@ -17,8 +19,10 @@ class Router extends RouterBase
         }
 
         list($uri, $ownMiddlewares, $callback) = $this->validateMethodArgs($args);
+
+        $prefixes = implode('', $this->routePrefixes);
         
-        $this->registerRoute($method, $uri, $ownMiddlewares, $callback);
+        $this->registerRoute($method, "{$prefixes}{$uri}", $ownMiddlewares, $callback);
     }
 
     public function activate()
@@ -28,7 +32,7 @@ class Router extends RouterBase
         $currentMethod = strtolower($_SERVER['REQUEST_METHOD']);
 
         // uri existance
-        $this->handleUriExistance($currentUri);
+        if(!$this->handleUriExistance($currentUri)) return;
 
         $route = $this->searchForUriAndMethod($currentUri, $currentMethod);
         
@@ -62,6 +66,7 @@ class Router extends RouterBase
     public function group(array $config, \Closure $closure)
     {
         $middlewareKey = 'middleware';
+        $numberOfMiddlewaresToRemove = 1;
 
         $this->validateGroupConfig($config, $middlewareKey);
 
@@ -70,6 +75,8 @@ class Router extends RouterBase
             if (is_array($config[$middlewareKey])) {
 
                 $this->groupMiddlewares = array_merge($this->groupMiddlewares, $config[$middlewareKey]);
+                
+                $numberOfMiddlewaresToRemove = count($config[$middlewareKey]);
             }
             else {
 
@@ -83,7 +90,16 @@ class Router extends RouterBase
 
         $closure();
         
-        array_key_exists($middlewareKey, $config) ? array_pop($this->groupMiddlewares) : array_pop($this->routePrefixes);
+        if(array_key_exists($middlewareKey, $config)) {
+
+            for ($i=0; $i < $numberOfMiddlewaresToRemove; $i++) {
+
+                array_pop($this->groupMiddlewares);
+            }
+        }
+        else {
+
+           array_pop($this->routePrefixes);
+        }
     }
-    
 }

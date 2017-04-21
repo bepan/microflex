@@ -9,7 +9,7 @@
 - Register 404 middlewares.
 - Register nested middlewares as group level.
 - Register nested prefixes to group route names.
-- Request Class: all, input, getCookie(s), (g/s)etSessionValue, getSession, unsetSessionValue, destroySession.
+- Request Class: all, input, getCookie(s), (g/s)etSessionValue, getAllSession, unsetSessionValue, destroySession.
 - Response Class: setContentType, json, send, render, redirect, setCookie, unsetCookie, setCode.
 - Helper functions: session, input, has_session
 
@@ -17,3 +17,4 @@
 - RouteMethod Class.
 - Session Class.
 - Cookie Class.
+- Constructor Middlewares.
