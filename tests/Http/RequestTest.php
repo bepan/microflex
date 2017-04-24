@@ -11,6 +11,7 @@ class RequestTest extends TestCase
         $_GET = ['name' => '<h1>Alberto</h1>', 'age' => 25];
 
         $request = $this->getMockBuilder(Microflex\Http\Request::class)
+                        ->disableOriginalConstructor()
                         ->setMethods(['getHeaders'])
                         ->getMock();
 
@@ -27,6 +28,7 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
 
         $request = $this->getMockBuilder(Microflex\Http\Request::class)
+                        ->disableOriginalConstructor()
                         ->setMethods(['getHeaders', 'getPHPInput'])
                         ->getMock();
 
@@ -47,7 +49,8 @@ class RequestTest extends TestCase
 
         $_POST = ['name' => 'Ada', 'age' => 22];
 
-        $request = $this->getMockBuilder(Microflex\Http\Request::class)
+        $request = $this->getMockBuilder(Microflex\Http\Request::class) 
+                        ->disableOriginalConstructor()
                         ->setMethods(['getHeaders'])
                         ->getMock();
 
@@ -59,6 +62,7 @@ class RequestTest extends TestCase
     public function test_getHeader_method_returns_sanitized_header_value()
     {
         $request = $this->getMockBuilder(Microflex\Http\Request::class)
+                        ->disableOriginalConstructor()
                         ->setMethods(['getRawHeaders'])
                         ->getMock();
 
@@ -71,6 +75,7 @@ class RequestTest extends TestCase
     public function test_getHeaders_method_returns_sanitized_header_array()
     {
         $request = $this->getMockBuilder(Microflex\Http\Request::class)
+                        ->disableOriginalConstructor()
                         ->setMethods(['getRawHeaders'])
                         ->getMock();
 

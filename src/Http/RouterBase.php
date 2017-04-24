@@ -63,11 +63,9 @@ abstract class RouterBase
                 $refFunc = new \ReflectionFunction($callback);
             }
 
-            $mainParams = $this->getCallbackParams($refFunc);  
+            $mainParams = $this->getCallbackParams($refFunc, $urlParams);   
 
-            $this->populateReqObjectWithUrlParams($mainParams, $urlParams);    
-
-            $this->executeMiddleware($callback, $mainParams);
+            $this->executeMiddleware($callback, $mainParams, $urlParams);
 
             if (!$this->nextMiddleware) return; // break the callback stack if middlwares dont execute the next cb.
             
@@ -75,7 +73,7 @@ abstract class RouterBase
         }
     }
 
-    protected function executeMiddleware($callback, $mainParams)
+    protected function executeMiddleware($callback, $mainParams, $urlParams)
     {
         if (is_array($callback)) {
 
@@ -85,7 +83,7 @@ abstract class RouterBase
 
                 $classRefFunc = new \ReflectionMethod($callback[0], '__construct');
 
-                $classDependencies = $this->getCallbackParams($classRefFunc);
+                $classDependencies = $this->getCallbackParams($classRefFunc, $urlParams);
             }
         
             $object = new $callback[0](...$classDependencies);
@@ -98,30 +96,7 @@ abstract class RouterBase
         $callback(...$mainParams);
     }
 
-    protected function populateReqObjectWithUrlParams($mainParams, $urlParams)
-    {
-        $reqObject = null;
-
-        foreach ($mainParams as $param) {
-
-            if ($param instanceof Request) {
-
-                $reqObject = $param;
-            }
-        }
-
-        if (count($urlParams) && $reqObject !== null) { // fill dynamic params array of req object.
-
-            $explodeUri = explode('/', $_SERVER['REQUEST_URI']);
-            
-            foreach ($urlParams as $key => $value) {
-
-                $reqObject->params[$key] = preg_replace('/\?.*/', '', $explodeUri[$value]);
-            }
-        }
-    }
-
-    protected function getCallbackParams($reflectionFunc)
+    protected function getCallbackParams($reflectionFunc, $urlParams = [])
     {
         if (count($reflectionFunc->getParameters()) === 0) {
 
@@ -145,29 +120,30 @@ abstract class RouterBase
                 
                 $finalParam = $this->cachedArguments[$classType];
             }
+            elseif ($classType === 'callable' || $classType === 'Closure') {
+                
+                $finalParam = function() { $this->nextMiddleware = true; };
+            }
+            elseif($classType === 'Microflex\Http\Request') {
+                
+                $finalParam = new Request($urlParams);
+
+                $this->cachedArguments[$classType] = $finalParam;
+            }
             else {
+   
+                $subfinalParams = [];        
 
-                if ($classType === 'callable' || $classType === 'Closure') {
-                    
-                    $finalParam = function() { $this->nextMiddleware = true; };
+                if (method_exists($classType, '__construct')) {        
+
+                    $subrefFunc = new \ReflectionMethod($classType, '__construct');       
+
+                    $subfinalParams = $this->getCallbackParams($subrefFunc);
                 }
-                else {    
 
-                    $subfinalParams = [];        
+                $finalParam = new $classType(...$subfinalParams);
 
-                    if (method_exists($classType, '__construct')) {        
-
-                        $subrefFunc = new \ReflectionMethod($classType, '__construct');       
-
-                        $subfinalParams = $this->getCallbackParams($subrefFunc);
-                    }
-
-                    $finalObject = new $classType(...$subfinalParams);
-
-                    $finalParam = $finalObject;
-
-                    $this->cachedArguments[$classType] = $finalObject;
-                }
+                $this->cachedArguments[$classType] = $finalParam;
             }
 
             $finalParams[] = $finalParam;

@@ -4,6 +4,19 @@ namespace Microflex\Http;
 
 class Request
 {
+    protected $url;
+    protected $session;
+    protected $cookie;
+
+    public function __construct(array $urlParams)
+    {
+        $this->url = new Url($urlParams);
+
+        $this->session = new Session;
+
+        $this->cookie = new Cookie;
+    }
+
     public function all()
     {
         $headers = $this->getHeaders();
@@ -39,7 +52,11 @@ class Request
     {
         $_AJAX = $this->getPHPInput();
 
-        return htmlspecialchars($_AJAX[$key] ?? $_POST[$key] ?? $_GET[$key] ?? null);
+        $value = $_AJAX[$key] ?? $_POST[$key] ?? $_GET[$key] ?? null;
+
+        if ($value === null) return null;
+
+        return htmlspecialchars($value);
     }
 
     public function header($name)
@@ -58,6 +75,21 @@ class Request
             return htmlspecialchars($value);
 
         }, $headers);
+    }
+
+    public function url()
+    {
+        return $this->url;
+    }
+
+    public function session()
+    {
+        return $this->session;
+    }
+
+    public function cookie()
+    {
+        return $this->cookie;
     }
 
     protected function getRawHeaders()
