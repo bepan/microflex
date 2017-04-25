@@ -25,6 +25,7 @@ class Url
 
     public function query($name)
     {
+        //
         return htmlspecialchars( $this->queries[$name] ?? null );
     }
 
@@ -39,6 +40,7 @@ class Url
 
     public function param($name)
     {
+        //
         return htmlspecialchars($this->params[$name] ?? null);
     }
 

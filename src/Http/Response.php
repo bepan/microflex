@@ -4,16 +4,6 @@ namespace Microflex\Http;
 
 class Response
 {
-    public function setCookie($name, $value = "", $expire = 0, $path = '/', $domain = '', $secure = false, $httpOnly = false)
-    {
-        setcookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
-    }
-
-    public function unsetCookie($name, $path = '/')
-    {
-        setcookie($name, "", time() - 3600, $path);
-    }
-
     public function redirect($url, $withInput = false, array $flashedData = [])
     {
         if ($withInput) {

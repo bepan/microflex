@@ -4,21 +4,21 @@ namespace Microflex\Http;
 
 class Session
 {
-    public function setSessionValue($key, $value)
+    public function set($key, $value)
     {
         session_start();
 
         $_SESSION[$key] = [ htmlspecialchars($value), false ];
     }
 
-    public function getSessionValue($key)
+    public function get($key)
     {
         session_start();
 
         return htmlspecialchars($_SESSION[$key][0] ?? null);
     }
 
-    public function getSession()
+    public function all()
     {
         session_start();
 
@@ -29,14 +29,14 @@ class Session
         }, $_SESSION); 
     }
 
-    public function unsetSessionValue($key)
+    public function unset($key)
     {
         session_start();
 
         unset($_SESSION[$key]);
     }
 
-    public function destroySession()
+    public function destroy()
     {
         session_start();
 
