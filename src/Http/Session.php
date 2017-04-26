@@ -4,23 +4,31 @@ namespace Microflex\Http;
 
 class Session
 {
+    public function start()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+
+            session_start();
+        }
+    }
+
     public function set($key, $value)
     {
-        session_start();
+        $this->start();
 
         $_SESSION[$key] = [ htmlspecialchars($value), false ];
     }
 
     public function get($key)
     {
-        session_start();
+        $this->start();
 
         return htmlspecialchars($_SESSION[$key][0] ?? null);
     }
 
     public function all()
     {
-        session_start();
+        $this->start();
 
         return array_map(function($value) {
             
@@ -31,14 +39,14 @@ class Session
 
     public function unset($key)
     {
-        session_start();
+        $this->start();
 
         unset($_SESSION[$key]);
     }
 
     public function destroy()
     {
-        session_start();
+        $this->start();
 
         //remove PHPSESSID from browser
         if ( isset($_COOKIE[session_name()]) ) {

@@ -8,7 +8,8 @@ class Router extends RouterBase
     {
         // init stuff
         require_once __DIR__ . '/../helpers.php';
-        $this->setInputSession();
+        
+        //$this->setInputSession();
     }
     
     public function __call($method, $args)

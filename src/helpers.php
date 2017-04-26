@@ -4,7 +4,7 @@ define('WITH_INPUT', true);
 
 function partial($path)
 {
-    require($path);
+    //require($path);
 }
 
 function input($name)
