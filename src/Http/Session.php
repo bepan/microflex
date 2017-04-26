@@ -32,7 +32,7 @@ class Session
 
         return array_map(function($value) {
             
-            return htmlspecialchars($value);
+            return htmlspecialchars($value[0]);
 
         }, $_SESSION); 
     }
@@ -49,15 +49,17 @@ class Session
         $this->start();
 
         //remove PHPSESSID from browser
-        if ( isset($_COOKIE[session_name()]) ) {
-
-            setcookie(session_name(), "", time() - 3600, "/");
-        }
+        //$this->setcookie(session_name(), "", 1, "/");
 
         //clear session from globals
         $_SESSION = [];
 
         //clear session from disk
+        $this->sessionDestroy();
+    }
+
+    protected function sessionDestroy()
+    {
         session_destroy();
     }
 }

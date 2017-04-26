@@ -28,9 +28,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home', $fooClosure); // Here is the key part
 
@@ -45,9 +43,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->post('/home', $fooClosure); // Here is the key part
 
@@ -62,9 +58,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'PUT';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->put('/home', $fooClosure); // Here is the key part
 
@@ -79,9 +73,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'DELETE';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->delete('/home', $fooClosure); // Here is the key part
 
@@ -96,9 +88,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'PATCH';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->patch('/home', $fooClosure); // Here is the key part
 
@@ -112,9 +102,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/', 'FooController@index'); // Here is the key part
 
@@ -129,9 +117,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home/?id=10&sid=11&foo=bar'; // Here is the key part
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                           ->setMethods(['setInputSession'])
-                           ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home', $fooClosure);
 
@@ -146,9 +132,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home-route/100/my-slug/?id=10'; // Here is the key part
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                           ->setMethods(['setInputSession'])
-                           ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home-route/:id/:slug', $fooClosure); // Here is the key part
 
@@ -163,9 +147,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home', $barClosure); // Here is the key part
 
@@ -179,9 +161,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home', 'FooController@create'); // Here is the key part
 
@@ -195,9 +175,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home', 'BarController@index'); // Here is the key part
 
@@ -212,9 +190,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home', $zooClosure); // Here is the key part
 
@@ -229,9 +205,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/home', [$closureFooMiddleware, FooMiddleware::class], $fooClosure); // Here is the key part
 
@@ -248,9 +222,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
         
         $router->group(['middleware' => FooMiddleware::class], function() use ($router, $closureFooMiddleware, $fooClosure) {
             
@@ -276,9 +248,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/foo';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
         
         $router->group(['middleware' => FooMiddleware::class], function() use ($router, $closureFooMiddleware, $fooClosure) {
             
@@ -306,9 +276,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/prefix/admin/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
         
         $router->group(['prefix' => '/prefix'], function() use ($router, $fooClosure) {
             
@@ -330,9 +298,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/prefix/about';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
         
         $router->group(['prefix' => '/prefix'], function() use ($router, $fooClosure) {
             
@@ -356,9 +322,7 @@ class RouterTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/home';
 
-        $router = $this->getMockBuilder(Microflex\Http\Router::class)
-                       ->setMethods(['setInputSession'])
-                       ->getMock();
+        $router = new Microflex\Http\Router;
 
         $router->get('/about', $fooClosure); // Here is the key part
 

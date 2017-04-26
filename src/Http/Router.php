@@ -3,15 +3,7 @@
 namespace Microflex\Http;
 
 class Router extends RouterBase
-{
-    public function __construct()
-    {
-        // init stuff
-        require_once __DIR__ . '/../helpers.php';
-        
-        //$this->setInputSession();
-    }
-    
+{    
     public function __call($method, $args)
     {
         if (!in_array($method, $this->methods)) {
