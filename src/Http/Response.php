@@ -4,30 +4,30 @@ namespace Microflex\Http;
 
 class Response
 {
-    public function redirect($url, $withInput = false, array $flashedData = [])
+    public function __construct(Session $session, Request $request)
     {
-        if ($withInput) {
+        $this->session = $session;
 
-            session_start();
+        $this->request = $request;
+    }
 
-            $request = new Request;
-
-            $_SESSION['php_input_session'] = $request->all();
-        }
-
-        if (count($flashedData) > 0) {
-
-            session_start();
-
-            foreach ($flashedData as $key => $value) {
-
-                $_SESSION[$key] = [ htmlspecialchars($value), true ];
-            }
-        }
-
+    public function redirect($url)
+    {
         header("Location: {$url}");
 
-        exit();
+        return $this;
+    }
+
+    public function with($key, $value)
+    {
+        $this->session->set($key, $value);
+    }
+
+    public function withInput()
+    {
+        $input = $this->request->all();
+
+        $this->session->set('php_input_session', $input, true);
     }
 
     public function render($filePath, array $data = [])
@@ -60,7 +60,7 @@ class Response
 
     public function setCode($code)
     {
-        http_response_code($code);
+        $this->http_response_code($code);
 
         return $this;
     }
@@ -71,19 +71,29 @@ class Response
             
     		case 'plain':
     		case 'html':
-    		    header("Content-Type: text/{$type}");
+                $this->set_header('Content-Type', "text/{$type}");
     			break;
 
     		case 'json':
     		case 'xml':
-    		    header("Content-Type: application/{$type}");
+                $this->set_header('Content-Type', "application/{$type}");
     			break;
     		
     		default:
-    			header("Content-Type: text/plain");
+    			throw new \Exception("Content-Type: $type, not exists.");
     			break;
     	}
 
     	return $this;
+    }
+
+    protected function http_response_code($code)
+    {
+        http_response_code($code);
+    }
+
+    protected function set_header($header, $value)
+    {
+        header("$header: $value");
     }
 }

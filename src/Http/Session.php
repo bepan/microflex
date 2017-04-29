@@ -6,17 +6,27 @@ class Session
 {
     public function start()
     {
-        if (session_status() === PHP_SESSION_NONE) {
+        if ($this->session_status() === PHP_SESSION_NONE) {
 
-            session_start();
+            $this->session_start();
         }
     }
 
-    public function set($key, $value)
+    protected function session_status()
+    {
+        return session_status();
+    }
+
+    protected function session_start()
+    {
+        session_start();
+    }
+
+    public function set($key, $value, $isFlashed = false)
     {
         $this->start();
 
-        $_SESSION[$key] = [ htmlspecialchars($value), false ];
+        $_SESSION[$key] = [ htmlspecialchars($value), $isFlashed ];
     }
 
     public function get($key)
@@ -55,10 +65,10 @@ class Session
         $_SESSION = [];
 
         //clear session from disk
-        $this->sessionDestroy();
+        $this->session_destroy();
     }
 
-    protected function sessionDestroy()
+    protected function session_destroy()
     {
         session_destroy();
     }

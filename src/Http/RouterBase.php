@@ -124,9 +124,9 @@ abstract class RouterBase
                 
                 $finalParam = function() { $this->nextMiddleware = true; };
             }
-            elseif($classType === 'Microflex\Http\Request') {
+            elseif($classType === 'Microflex\Http\Url') {
                 
-                $finalParam = new Request($urlParams);
+                $finalParam = new Url($urlParams);
 
                 $this->cachedArguments[$classType] = $finalParam;
             }
@@ -138,7 +138,7 @@ abstract class RouterBase
 
                     $subrefFunc = new \ReflectionMethod($classType, '__construct');       
 
-                    $subfinalParams = $this->getCallbackParams($subrefFunc);
+                    $subfinalParams = $this->getCallbackParams($subrefFunc, $urlParams);
                 }
 
                 $finalParam = new $classType(...$subfinalParams);

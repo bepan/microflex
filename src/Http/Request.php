@@ -4,17 +4,13 @@ namespace Microflex\Http;
 
 class Request
 {
-    protected $url;
-    protected $session;
-    protected $cookie;
-
-    public function __construct(array $urlParams)
+    public function __construct(Url $url, Session $session, Cookie $cookie)
     {
-        $this->url = new Url($urlParams);
+        $this->url = $url;
 
-        $this->session = new Session;
+        $this->session = $session;
 
-        $this->cookie = new Cookie;
+        $this->cookie = $cookie;
     }
 
     public function all()
@@ -94,13 +90,11 @@ class Request
 
     protected function getRawHeaders()
     {
-        //
         return getallheaders();
     }
 
     protected function getPHPInput()
     {
-        //
         return json_decode(file_get_contents('php://input'), true);
     }
 }

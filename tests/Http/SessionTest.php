@@ -4,23 +4,46 @@ use PHPUnit\Framework\TestCase;
 
 class SessionTest extends TestCase
 {
-	protected $session;
-
 	public function setUp()
 	{
-		global $wasSessionDestroyCalled;
-
-        $wasSessionDestroyCalled = false;
-
-        $this->session = $this->getMockBuilder(Microflex\Http\Session::class)
-                              ->setMethods(['start', 'sessionDestroy'])
+        $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+                              ->setMethods(['start'])
                               ->getMock();
 	}
 
 	public function tearDown()
 	{
-		//
 	    $_SESSION = [];
+	}
+
+	public function test_start_method_call_session_start_if_not_started()
+	{
+        $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+                              ->setMethods(['session_status', 'session_start'])
+                              ->getMock();
+
+        $this->session->method('session_status')
+                      ->willReturn(1);
+
+        $this->session->expects($this->once())
+                      ->method('session_start');
+
+        $this->session->start();
+	}
+
+	public function test_start_method_not_to_call_session_start_if_already_started()
+	{
+        $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+                              ->setMethods(['session_status', 'session_start'])
+                              ->getMock();
+
+        $this->session->method('session_status')
+                      ->willReturn(2);
+
+        $this->session->expects($this->never())
+                      ->method('session_start');
+
+        $this->session->start();
 	}
 
 	public function test_setting_getting_session_value()
@@ -59,11 +82,15 @@ class SessionTest extends TestCase
 
 	public function test_destroy_method_removes_the_whole_session()
 	{
+        $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+                              ->setMethods(['start', 'session_destroy'])
+                              ->getMock();
+
 	    $this->session->set('color', 'blue');
 	    $this->session->set('band', 'tbdm');
-	    
+
         $this->session->expects($this->once())
-                      ->method('sessionDestroy');
+                      ->method('session_destroy');
 
 	    $this->session->destroy();
 

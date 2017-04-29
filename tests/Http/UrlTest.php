@@ -4,8 +4,6 @@ use PHPUnit\Framework\TestCase;
 
 class UrlTest extends TestCase
 {
-    protected $url;
-
     public function setUp()
     {
         $_SERVER['QUERY_STRING'] = 'name=<h1>Albert</h1>&girlfriend=stephanie';
