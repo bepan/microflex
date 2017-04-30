@@ -26,7 +26,31 @@ class Session
     {
         $this->start();
 
-        $_SESSION[$key] = [ htmlspecialchars($value), $isFlashed ];
+        $_SESSION[$key] = [ $this->sanitize($value), $isFlashed ];
+    }
+
+    protected function sanitize($value)
+    {
+        $new = [];
+
+        if ( is_array($value) ) {
+
+            foreach ($value as $v) {
+
+                if ( is_array($v) ) {
+
+                    $new[] = $this->sanitize($v);
+                }
+                else {
+                
+                    $new[] = htmlspecialchars($v);
+                }
+            }
+
+            return $new;
+        }
+        
+        return htmlspecialchars($value);
     }
 
     public function get($key)

@@ -13,14 +13,14 @@ class Response
 
     public function redirect($url)
     {
-        header("Location: {$url}");
+        $this->set_header('Location', $url);
 
         return $this;
     }
 
     public function with($key, $value)
     {
-        $this->session->set($key, $value);
+        $this->session->set($key, $value, true);
     }
 
     public function withInput()
