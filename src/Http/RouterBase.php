@@ -109,7 +109,7 @@ abstract class RouterBase
 
             $splitParam = explode(' ', $output[0]);
 
-            if (count($splitParam) !== 5) {
+            if (count($splitParam) < 5) {
 
                 throw new \Exception('Arguments provided must be type hinted.');
             }

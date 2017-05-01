@@ -6,7 +6,12 @@ class SessionTest extends TestCase
 {
 	public function setUp()
 	{
+        $this->security = new Microflex\Utils\Security;
+
+        $this->cookieStub = $this->createMock(Microflex\Http\Cookie::class);
+
         $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+                              ->setConstructorArgs([$this->security, $this->cookieStub])
                               ->setMethods(['start'])
                               ->getMock();
 	}
@@ -19,6 +24,7 @@ class SessionTest extends TestCase
 	public function test_start_method_call_session_start_if_not_started()
 	{
         $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+                              ->setConstructorArgs([$this->security, $this->cookieStub])
                               ->setMethods(['session_status', 'session_start'])
                               ->getMock();
 
@@ -34,6 +40,7 @@ class SessionTest extends TestCase
 	public function test_start_method_not_to_call_session_start_if_already_started()
 	{
         $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+                              ->setConstructorArgs([$this->security, $this->cookieStub])
                               ->setMethods(['session_status', 'session_start'])
                               ->getMock();
 
@@ -51,6 +58,7 @@ class SessionTest extends TestCase
 	    $this->session->set('color', 'blue');
 
 	    $this->assertEquals('blue', $this->session->get('color'));
+
 	    $this->assertEquals(false, $_SESSION['color'][1]);
 	}
 
@@ -62,12 +70,12 @@ class SessionTest extends TestCase
 	    $this->assertEquals(null, $this->session->get('icecream'));
 	}
 
-	public function test_all_method_returns_all_sanitized_session_array()
+	public function test_all_method_returns_all_session_array()
 	{
 	    $this->session->set('color', 'blue');
-	    $this->session->set('icecream', '<a>banana<a>');
+	    $this->session->set('icecream', 'banana');
 
-	    $this->assertEquals(['color' => 'blue', 'icecream' => '&amp;lt;a&amp;gt;banana&amp;lt;a&amp;gt;'], $this->session->all());
+	    $this->assertEquals(['color' => 'blue', 'icecream' => 'banana'], $this->session->all());
 	}
 
 	public function test_unset_method_removes_session_value()
@@ -83,11 +91,17 @@ class SessionTest extends TestCase
 	public function test_destroy_method_removes_the_whole_session()
 	{
         $this->session = $this->getMockBuilder(\Microflex\Http\Session::class)
+	                          ->setConstructorArgs([$this->security, $this->cookieStub])
                               ->setMethods(['start', 'session_destroy'])
                               ->getMock();
 
 	    $this->session->set('color', 'blue');
 	    $this->session->set('band', 'tbdm');
+
+
+	    $this->cookieStub->expects($this->once())
+	                     ->method('unset')
+	                     ->with(session_name());
 
         $this->session->expects($this->once())
                       ->method('session_destroy');

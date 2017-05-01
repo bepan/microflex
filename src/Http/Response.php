@@ -4,11 +4,18 @@ namespace Microflex\Http;
 
 class Response
 {
-    public function __construct(Session $session, Request $request)
+    public function __construct(Session $session, Request $request, Cookie $cookie)
     {
         $this->session = $session;
 
         $this->request = $request;
+
+        $this->cookie = $cookie;
+    }
+
+    public function setHeader($name, $value)
+    {
+        $this->header($name, $value);
     }
 
     public function redirect($url)
@@ -85,6 +92,11 @@ class Response
     	}
 
     	return $this;
+    }
+
+    public function cookie()
+    {
+        return $this->cookie;
     }
 
     protected function http_response_code($code)

@@ -4,84 +4,87 @@ use PHPUnit\Framework\TestCase;
 
 class RequestTest extends TestCase
 {
+    public function setUp()
+    {
+        $this->security = new Microflex\Utils\Security;
+        $this->urlStub = $this->createMock(Microflex\Http\Url::class);
+        $this->sessionStub = $this->createMock(Microflex\Http\Session::class);
+        $this->cookieStub = $this->createMock(Microflex\Http\Cookie::class);
+
+        $this->request = $this->getMockBuilder(Microflex\Http\Request::class)
+                        ->setConstructorArgs([
+                            $this->security, 
+                            $this->urlStub, 
+                            $this->sessionStub, 
+                            $this->cookieStub
+                        ])
+                        ->setMethods(['getHeaders', 'getPHPInput', 'getRawHeaders'])
+                        ->getMock();
+    }
+
     public function test_all_method_returns_dollar_GET_when_any_get_request()
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
 
-        $_GET = ['name' => '<h1>Alberto</h1>', 'age' => 25];
+        $_GET = ['name' => 'get'];
 
-        $request = $this->getMockBuilder(Microflex\Http\Request::class)
-                        ->disableOriginalConstructor()
-                        ->setMethods(['getHeaders'])
-                        ->getMock();
+        $this->request->method('getHeaders')
+                      ->willReturn(['Content-Type' => 'application/json', 'User-Agent' => 'Mozilla']);
 
-        $request->method('getHeaders')
-                ->willReturn(['Content-Type' => 'application/json', 'User-Agent' => 'Mozilla']);
+        $this->assertEquals(['name' => 'get'], $this->request->all());
 
-        $this->assertEquals(['name' => '&lt;h1&gt;Alberto&lt;/h1&gt;', 'age' => 25], $request->all());
-
-        $this->assertEquals('&lt;h1&gt;Alberto&lt;/h1&gt;', $request->input('name'));
+        $this->assertEquals('get', $this->request->input('name'));
     }
 
     public function test_all_method_returns_dollar_AJAX_when_any_nonget_ajax_request()
     {
-        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_METHOD'] = 'PUT';
 
-        $request = $this->getMockBuilder(Microflex\Http\Request::class)
-                        ->disableOriginalConstructor()
-                        ->setMethods(['getHeaders', 'getPHPInput'])
-                        ->getMock();
+        $this->request->method('getHeaders')
+                      ->willReturn(['Content-Type' => 'application/json', 'User-Agent' => 'Mozilla']);
 
-        $request->method('getHeaders')
-                ->willReturn(['Content-Type' => 'application/json', 'User-Agent' => 'Mozilla']);
+        $this->request->method('getPHPInput')
+                      ->willReturn(['name' => 'ajax']);
 
-        $request->method('getPHPInput')
-                ->willReturn(['name' => 'Marco', 'age' => 24]);
+        $this->assertEquals(['name' => 'ajax'], $this->request->all());
 
-        $this->assertEquals(['name' => 'Marco', 'age' => 24], $request->all());
-
-        $this->assertEquals('Marco', $request->input('name'));
+        $this->assertEquals('ajax', $this->request->input('name'));
     }
 
     public function test_all_method_returns_dollar_POST_when_form_data_post_request()
     {
         $_SERVER['REQUEST_METHOD'] = 'POST';
 
-        $_POST = ['name' => 'Ada', 'age' => 22];
+        $_POST = ['name' => 'post'];
 
-        $request = $this->getMockBuilder(Microflex\Http\Request::class) 
-                        ->disableOriginalConstructor()
-                        ->setMethods(['getHeaders'])
-                        ->getMock();
+        $this->assertEquals(['name' => 'post'], $this->request->all());
 
-        $this->assertEquals(['name' => 'Ada', 'age' => 22], $request->all());
-
-        $this->assertEquals('Ada', $request->input('name'));
+        $this->assertEquals('post', $this->request->input('name'));
     }
 
-    public function test_getHeader_method_returns_sanitized_header_value()
+    public function test_getHeader_method_returns_right_header()
     {
-        $request = $this->getMockBuilder(Microflex\Http\Request::class)
-                        ->disableOriginalConstructor()
-                        ->setMethods(['getRawHeaders'])
-                        ->getMock();
+        $this->request->method('getRawHeaders')
+                      ->willReturn(['token' => '12345', 'User-Agent' => 'Mozilla']);
 
-        $request->method('getRawHeaders')
-                ->willReturn(['token' => '<12345', 'User-Agent' => 'Mozilla']);
-
-        $this->assertEquals('&lt;12345', $request->header('token'));
+        $this->assertEquals('12345', $this->request->getHeader('token'));
     }
 
     public function test_getHeaders_method_returns_sanitized_header_array()
     {
-        $request = $this->getMockBuilder(Microflex\Http\Request::class)
-                        ->disableOriginalConstructor()
-                        ->setMethods(['getRawHeaders'])
-                        ->getMock();
+        $this->request = $this->getMockBuilder(Microflex\Http\Request::class)
+                              ->setConstructorArgs([
+                                  $this->security, 
+                                  $this->urlStub, 
+                                  $this->sessionStub, 
+                                  $this->cookieStub
+                              ])
+                              ->setMethods(['getRawHeaders'])
+                              ->getMock();
 
-        $request->method('getRawHeaders')
-                ->willReturn(['token' => '<12345', 'User-Agent' => 'Mozilla']);
+        $this->request->method('getRawHeaders')
+                      ->willReturn(['token' => '12345', 'User-Agent' => 'Mozilla']);
 
-        $this->assertEquals(['token' => '&lt;12345', 'User-Agent' => 'Mozilla'], $request->headers());
+        $this->assertEquals(['token' => '12345', 'User-Agent' => 'Mozilla'], $this->request->getHeaders());
     }
 }

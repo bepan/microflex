@@ -2,8 +2,19 @@
 
 namespace Microflex\Http;
 
+use Microflex\Utils\Security;
+
 class Session
 {
+    protected $security;
+    protected $cookie;
+
+    public function __construct(Security $security, Cookie $cookie)
+    {
+        $this->security = $security;
+        $this->cookie = $cookie;
+    }
+
     public function start()
     {
         if ($this->session_status() === PHP_SESSION_NONE) {
@@ -26,49 +37,28 @@ class Session
     {
         $this->start();
 
-        $_SESSION[$key] = [ $this->sanitize($value), $isFlashed ];
-    }
-
-    protected function sanitize($value)
-    {
-        $new = [];
-
-        if ( is_array($value) ) {
-
-            foreach ($value as $v) {
-
-                if ( is_array($v) ) {
-
-                    $new[] = $this->sanitize($v);
-                }
-                else {
-                
-                    $new[] = htmlspecialchars($v);
-                }
-            }
-
-            return $new;
-        }
-        
-        return htmlspecialchars($value);
+        $_SESSION[$key] = [ $this->security->sanitize($value), $isFlashed ];
     }
 
     public function get($key)
     {
         $this->start();
 
-        return htmlspecialchars($_SESSION[$key][0] ?? null);
+        return $this->security->sanitize($_SESSION[$key][0] ?? null);
     }
 
     public function all()
     {
         $this->start();
 
-        return array_map(function($value) {
-            
-            return htmlspecialchars($value[0]);
+        $sessionArr = [];
 
-        }, $_SESSION); 
+        foreach ($_SESSION as $key => $value) {
+
+            $sessionArr[$key] = $value[0];
+        }
+
+        return $this->security->sanitize($sessionArr);
     }
 
     public function unset($key)
@@ -83,7 +73,7 @@ class Session
         $this->start();
 
         //remove PHPSESSID from browser
-        //$this->setcookie(session_name(), "", 1, "/");
+        $this->cookie->unset(session_name());
 
         //clear session from globals
         $_SESSION = [];

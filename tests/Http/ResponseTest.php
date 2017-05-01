@@ -10,8 +10,14 @@ class ResponseTest extends TestCase
 
         $this->requestStub = $this->createMock(Microflex\Http\Request::class);
 
+        $this->cookieStub = $this->createMock(Microflex\Http\Cookie::class);
+
         $this->response = $this->getMockBuilder(Microflex\Http\Response::class)
-                               ->setConstructorArgs([$this->sessionStub, $this->requestStub])
+                               ->setConstructorArgs([
+                                   $this->sessionStub, 
+                                   $this->requestStub,
+                                   $this->cookieStub
+                               ])
                                ->setMethods(['set_header'])
                                ->getMock();
     }

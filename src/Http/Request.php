@@ -2,14 +2,20 @@
 
 namespace Microflex\Http;
 
+use Microflex\Utils\Security;
+
 class Request
 {
-    public function __construct(Url $url, Session $session, Cookie $cookie)
+    protected $security;
+    protected $url;
+    protected $session;
+    protected $cookie;
+
+    public function __construct(Security $security, Url $url, Session $session, Cookie $cookie)
     {
+        $this->security = $security;
         $this->url = $url;
-
         $this->session = $session;
-
         $this->cookie = $cookie;
     }
 
@@ -19,58 +25,38 @@ class Request
 
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-            return array_map(function($value) {
-
-                return htmlspecialchars($value);
-
-            }, $_GET);
+            return $this->security->sanitize($_GET);
         }
 
         if ( isset($headers['Content-Type']) && $headers['Content-Type'] === 'application/json' ) {
 
             $_AJAX = $this->getPHPInput();
 
-            return array_map(function($value) {
-
-                return htmlspecialchars($value);
-
-            }, $_AJAX);
+            return $this->security->sanitize($_AJAX);
         }
 
-        return array_map(function($value) {
-
-            return htmlspecialchars($value);
-
-        }, $_POST);
+        return $this->security->sanitize($_POST);
     }
 
     public function input($key)
     {
         $_AJAX = $this->getPHPInput();
 
-        $value = $_AJAX[$key] ?? $_POST[$key] ?? $_GET[$key] ?? null;
-
-        if ($value === null) return null;
-
-        return htmlspecialchars($value);
+        return $this->security->sanitize($_AJAX[$key] ?? $_POST[$key] ?? $_GET[$key] ?? null);
     }
 
-    public function header($name)
+    public function getHeader($name)
     {
         $headers = $this->getRawHeaders();
 
-        return htmlspecialchars($headers[$name] ?? null);
+        return $this->security->sanitize($headers[$name] ?? null);
     }
 
-    public function headers()
+    public function getHeaders()
     {
         $headers = $this->getRawHeaders();
-        
-        return array_map(function($value) {
-            
-            return htmlspecialchars($value);
 
-        }, $headers);
+        return $this->security->sanitize($headers);
     }
 
     public function url()

@@ -2,30 +2,39 @@
 
 namespace Microflex\Http;
 
+use Microflex\Utils\Security;
+
 class Cookie
 {
-    public function set($name, $value = "", $expire = 0, $path = '/', $domain = '', $secure = false, $httpOnly = false)
+    protected $security;
+
+    public function __construct(Security $security)
     {
-        setcookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
+        $this->security = $security;
     }
 
-    public function unset($name, $path = '/')
+    public function set($name, $value = "", $expire = 0, $path = '/', $domain = '', $secure = false, $httpOnly = false)
     {
-        setcookie($name, "", time() - 3600, $path);
+        $this->setCookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
+    }
+
+    public function unset($name, $path = '/', $domain = '', $secure = false, $httpOnly = false)
+    {
+        $this->setCookie($name, "", 1, $path, $domain, $secure, $httpOnly);
     }
 
     public function get($name)
     {
-        //
-        return htmlspecialchars($_COOKIE[$name] ?? null);
+        return $this->security->sanitize($_COOKIE[$name] ?? null);
     }
 
     public function all()
     {
-        return array_map(function($value) {
-            
-            return htmlspecialchars($value);
+        return $this->security->sanitize($_COOKIE);    
+    }
 
-        }, $_COOKIE);     
+    protected function setCookie($name, $value, $expire, $path, $domain, $secure, $httpOnly)
+    {
+        setcookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
     }
 }
