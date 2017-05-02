@@ -6,14 +6,13 @@ class UrlTest extends TestCase
 {
     public function setUp()
     {
-        $_SERVER['QUERY_STRING'] = 'name=<h1>Albert</h1>&girlfriend=stephanie';
+        $_SERVER['QUERY_STRING'] = 'name=Albert&girlfriend=stephanie';
 
-        $_SERVER['REQUEST_URI'] = '/path/to/<h1>home<h1>';
+        $_SERVER['REQUEST_URI'] = '/path/to/home?id=10';
 
-        $this->url = new Microflex\Http\Url([
-            'id' => 1,
-            'slug' => 3
-        ]);
+        $this->security = new Microflex\Utils\Security;
+
+        $this->url = new Microflex\Http\Url($this->security);
     }
 
     public function test_query_method_with_name_returns_correct_value()
@@ -23,16 +22,26 @@ class UrlTest extends TestCase
 
     public function test_queries_method_returns_correct_values()
     {
-        $this->assertEquals(['name' => '&lt;h1&gt;Albert&lt;/h1&gt;', 'girlfriend' => 'stephanie'], $this->url->queries());
+        $this->assertEquals(['name' => 'Albert', 'girlfriend' => 'stephanie'], $this->url->queries());
     }
 
-    public function test_param_method_with_name_returns_correct_value()
+    public function test_setUrlParams_and_get_all_url_params()
     {
-        $this->assertEquals('path', $this->url->param('id'));
+        $this->url->setUrlParams([
+            'id' => 1,
+            'slug' => 3
+        ]);
+
+        $this->assertEquals(['id' => 'path', 'slug' => 'home'], $this->url->params());
     }
 
-    public function test_params_method_returns_correct_values()
+    public function test_setUrlParams_and_get_single_url_param()
     {
-        $this->assertEquals(['id' => 'path', 'slug' => '&lt;h1&gt;home&lt;h1&gt;'], $this->url->params());
+        $this->url->setUrlParams([
+            'id' => 1,
+            'slug' => 3
+        ]);
+
+        $this->assertEquals('home', $this->url->param('slug'));
     }
 }

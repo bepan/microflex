@@ -124,12 +124,6 @@ abstract class RouterBase
                 
                 $finalParam = function() { $this->nextMiddleware = true; };
             }
-            elseif($classType === 'Microflex\Http\Url') {
-                
-                $finalParam = new Url($urlParams);
-
-                $this->cachedArguments[$classType] = $finalParam;
-            }
             else {
    
                 $subfinalParams = [];        
@@ -142,6 +136,11 @@ abstract class RouterBase
                 }
 
                 $finalParam = new $classType(...$subfinalParams);
+
+                if ($classType === 'Microflex\Http\Url') {
+
+                    $finalParam->setUrlParams($urlParams);
+                }
 
                 $this->cachedArguments[$classType] = $finalParam;
             }

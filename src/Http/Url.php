@@ -2,20 +2,19 @@
 
 namespace Microflex\Http;
 
+use Microflex\Utils\Security;
+
 class Url
 {
     protected $params = [];
 
     protected $queries = [];
 
-    public function __construct(array $urlParams)
-    {
-        $explodeUri = explode('/', $_SERVER['REQUEST_URI']);
-        
-        foreach ($urlParams as $key => $value) {
+    protected $security;
 
-            $this->params[$key] = preg_replace('/\?.*/', '', $explodeUri[$value]);
-        }
+    public function __construct(Security $security)
+    {
+        $this->security = $security;
 
         if (isset($_SERVER['QUERY_STRING'])) {
 
@@ -23,33 +22,33 @@ class Url
         }
     }
 
+    public function setUrlParams(array $urlParams)
+    {
+        $explodeUri = explode('/', $_SERVER['REQUEST_URI']);
+        
+        foreach ($urlParams as $key => $value) {
+
+            $this->params[$key] = preg_replace('/\?.*/', '', $explodeUri[$value]);
+        }
+    }
+
     public function query($name)
     {
-        //
-        return htmlspecialchars( $this->queries[$name] ?? null );
+        return $this->security->sanitize($this->queries[$name] ?? null);
     }
 
     public function queries()
     {
-        return array_map(function($value) {
-  
-            return htmlspecialchars($value);
-
-        }, $this->queries);
+        return $this->security->sanitize($this->queries);
     }
 
     public function param($name)
     {
-        //
-        return htmlspecialchars($this->params[$name] ?? null);
+        return $this->security->sanitize($this->params[$name] ?? null);
     }
 
     public function params()
     {
-        return array_map(function($value) {
-  
-            return htmlspecialchars($value);
-
-        }, $this->params);
+        return $this->security->sanitize($this->params);
     }
 }
