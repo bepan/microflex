@@ -18,3 +18,10 @@
 - Session Class.
 - Cookie Class.
 - Constructor Middlewares.
+
+# Missings
+- Fix Uri spliting by '/'.
+- Populate App class.
+- process flashed session values at bootstrap.
+- Refactor view helper global functions.
+- Generate documentation on this file.
