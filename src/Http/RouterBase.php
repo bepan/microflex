@@ -11,19 +11,12 @@ abstract class RouterBase
        'put', 
        'patch'
     ];
-
     protected static $URL_PARAM_PATTERN = '/:[a-zA-Z]+/';
-
     protected $routes = [];
-    
     protected $cachedArguments = []; // to deal with singleton pattern
-    
     protected $nextMiddleware = false;
-
     protected $routePrefixes = [];
-
     protected $groupMiddlewares = [];
-
     protected $notFoundMiddlewares = [];
     
     protected function setInputSession()
@@ -223,13 +216,13 @@ abstract class RouterBase
     {
         $urlParams = [];
 
-        $explodePath = explode('/', $path);
+        $explodedPath = $this->utilsUrl->splitUri($path);
 
         preg_match_all(self::$URL_PARAM_PATTERN, $path, $outputParams);
 
         foreach ($outputParams[0] as $param) {
 
-            $key = array_search($param, $explodePath);
+            $key = array_search($param, $explodedPath);
 
             $value = strtolower(str_replace(':', '', $param));
 

@@ -3,17 +3,19 @@
 namespace Microflex\Http;
 
 use Microflex\Utils\Security;
+use Microflex\Utils\Url as UtilsUrl;
 
 class Url
 {
     protected $params = [];
-
     protected $queries = [];
-
     protected $security;
+    protected $utilsUrl;
 
-    public function __construct(Security $security)
+    public function __construct(Security $security, UtilsUrl $utilsUrl)
     {
+        $this->utilsUrl = $utilsUrl;
+
         $this->security = $security;
 
         if (isset($_SERVER['QUERY_STRING'])) {
@@ -24,7 +26,17 @@ class Url
 
     public function setUrlParams(array $urlParams)
     {
-        $explodeUri = explode('/', $_SERVER['REQUEST_URI']);
+        $uri = $_SERVER['REQUEST_URI'];
+
+        $uriWithlt = preg_replace('/%3C/', '<', $uri);
+
+        $completeUri = preg_replace('/%3E/', '>', $uriWithlt);
+
+        $explodeUri = $this->utilsUrl->splitUri($completeUri);
+        
+        // echo $_SERVER['REQUEST_URI'], '<br/>';
+        // print_r($explodeUri);
+        // exit();
         
         foreach ($urlParams as $key => $value) {
 

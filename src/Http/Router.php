@@ -3,7 +3,15 @@
 namespace Microflex\Http;
 
 class Router extends RouterBase
-{    
+{
+    protected $utilsUrl;
+
+    public function __construct()
+    {
+        $this->utilsUrl = new \Microflex\Utils\Url;
+        $this->cachedArguments['Microflex\Utils\Url'] = $this->utilsUrl;
+    }
+
     public function __call($method, $args)
     {
         if (!in_array($method, $this->methods)) {
