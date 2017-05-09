@@ -1,3 +1,5 @@
+[Go to PHP code](#app-code)
+
 # Microflex
 
 - Register routes with closures midd.
@@ -25,3 +27,19 @@
 - process flashed session values at bootstrap.
 - Refactor view helper global functions.
 - Generate documentation on this file.
+
+# App Code
+```php
+<?php
+namespace Microflex\Http;
+
+class App
+{
+    protected $router;
+    
+    public function __construct(Router $router)
+    {
+        $this->router = $router;
+    }
+}
+```
