@@ -1,7 +1,6 @@
 {
     "name": "betopan/microflex",
     "description": "A flexible and powerful PHP Microframework to create Websites and Restful apis. (Inspired on Laravel and Expressjs).",
-    "type": "project",
     "authors": [
         {
             "name": "Alberto Chapa",
