@@ -2,7 +2,7 @@
 
 namespace Microflex;
 
-use Microflex\Http\{Router, Cookie};
+use Microflex\Http\{Router, Cookie, Session};
 use Microflex\Utils\Security;
 
 class App
@@ -11,15 +11,15 @@ class App
 
     public function __construct()
     {
+        require __DIR__ . '/Utils/ViewHelpers.php';
         $this->router = new Router;
         $this->setInputSession();
+        $this->setSession();
     }
 
     protected function setInputSession()
     {
-    	$security = new Security;
-    	$cookie = new Cookie($security);
-        $session = new Security($security, $cookie);
+        $session = Session::getInstance();
 
         $session->start();
 
@@ -35,6 +35,25 @@ class App
         }
         
         $GLOBALS['php_input_session'] = [];
+    }
+
+    protected function setSession()
+    {
+        $session = Session::getInstance();
+
+        $session->start();
+
+        $GLOBALS['php_flashed_session'] = [];
+
+        foreach ($_SESSION as $key => $value) {
+            
+            if ($value[1]) {
+
+                $GLOBALS['php_flashed_session'][$key] = $value[0];
+
+                unset($_SESSION[$key]);
+            }
+        }
     }
 
     public function get($uri, $callback)
@@ -60,5 +79,20 @@ class App
     public function delete($uri, $callback)
     {
         $this->router->delete($uri, $callback);
+    }
+
+    public function handle404(...$callbacks)
+    {
+        $this->router->handle404(...$callbacks);
+    }
+
+    public function group(array $config, \Closure $closure)
+    {
+        $this->router->group($config, $closure);
+    }
+
+    public function activate()
+    {
+        $this->router->activate();
     }
 }

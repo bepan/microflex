@@ -15,6 +15,13 @@ class Session
         $this->cookie = $cookie;
     }
 
+    public static function getInstance()
+    {
+        $security = new Security;
+        $cookie = new Cookie($security);
+        return new Session($security, $cookie);
+    }
+
     public function start()
     {
         if ($this->session_status() === PHP_SESSION_NONE) {
