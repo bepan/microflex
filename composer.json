@@ -1,10 +1,11 @@
 {
-    "name": "root/php-mysql",
+    "name": "betopan/microflex",
+    "description": "A flexible and powerful PHP Microframework to create Websites and Restful apis. (Inspired on Laravel and Expressjs).",
     "type": "project",
     "authors": [
         {
             "name": "Alberto Chapa",
-            "email": "a.chapa.rodriguez@accenture.com"
+            "email": "alberto.crcu15@gmail.com"
         }
     ],
     "autoload": {
